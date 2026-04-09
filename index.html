@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doctor Spooky — Biofeedback Vibracional</title>
+<style>
+/* ── LIGHT THEME — igual ao demo do chat ── */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f8f7f5;color:#1a1a1a;min-height:100vh;overflow-x:hidden}
+.app{max-width:900px;margin:0 auto;padding:0 20px 80px}
+
+/* Header */
+header{text-align:center;padding:48px 0 36px;border-bottom:0.5px solid #e0ddd8;margin-bottom:32px}
+.eyebrow{font-size:11px;letter-spacing:.35em;color:#9c8f7a;text-transform:uppercase;margin-bottom:12px}
+.logo{font-size:clamp(32px,6vw,52px);font-weight:600;color:#1a1a1a;line-height:1;letter-spacing:-1px}
+.logo span{color:#b8860b}
+.logo-sub{font-size:15px;color:#9c8f7a;margin-top:8px;font-style:italic}
+
+/* Cards */
+.card{background:#fff;border:0.5px solid #e0ddd8;border-radius:12px;padding:28px 32px;margin-bottom:16px;transition:border-color .2s}
+.card:hover{border-color:#c8c2b8}
+.card-title{font-size:11px;font-weight:500;letter-spacing:.12em;color:#9c8f7a;text-transform:uppercase;margin-bottom:20px;padding-bottom:12px;border-bottom:0.5px solid #f0ede8;display:flex;align-items:center;gap:10px}
+.card-title::after{content:'';flex:1;height:0.5px;background:linear-gradient(90deg,#e0ddd8,transparent)}
+
+/* Form */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+label{display:block;font-size:11px;font-weight:500;color:#6b6258;letter-spacing:.05em;margin-bottom:6px;text-transform:uppercase}
+input[type=text],input[type=date],input[type=number],textarea{width:100%;background:#fff;border:0.5px solid #d4cfc8;border-radius:8px;color:#1a1a1a;font-family:inherit;font-size:15px;padding:10px 12px;outline:none;transition:border-color .2s,box-shadow .2s}
+input:focus,textarea:focus{border-color:#b8860b;box-shadow:0 0 0 3px rgba(184,134,11,.1)}
+input::placeholder,textarea::placeholder{color:#c4bfb8}
+textarea{resize:vertical;min-height:88px;line-height:1.55}
+.imc-out{font-size:14px;font-weight:500;color:#b8860b;padding:10px 12px;background:#fdf9f0;border:0.5px solid #e8dfc0;border-radius:8px;display:block;min-height:42px}
+
+/* Upload */
+.upload-zone{border:1.5px dashed #d4cfc8;border-radius:10px;padding:40px 24px;text-align:center;cursor:pointer;position:relative;overflow:hidden;transition:all .2s;background:#fafaf8}
+.upload-zone:hover,.upload-zone.over{border-color:#b8860b;background:#fdf9f0}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-icon{font-size:32px;margin-bottom:10px}
+.upload-title{font-size:14px;font-weight:500;color:#3a3530;margin-bottom:4px}
+.upload-sub{font-size:13px;color:#9c8f7a;font-style:italic}
+.upload-ok{margin-top:10px;font-size:13px;font-weight:500;color:#2d6a4f}
+
+/* Button */
+.btn-analyze{width:100%;padding:16px;background:#1a1a1a;border:none;border-radius:8px;color:#fff;font-family:inherit;font-size:14px;font-weight:500;letter-spacing:.06em;cursor:pointer;transition:all .2s}
+.btn-analyze:hover{background:#2d2d2d;transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.btn-analyze:disabled{opacity:.4;cursor:not-allowed;transform:none}
+
+/* Loading */
+.loading{display:none;text-align:center;padding:48px}
+.loading.on{display:block}
+.spin{width:40px;height:40px;border:2px solid #e0ddd8;border-top-color:#b8860b;border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-txt{font-size:13px;color:#9c8f7a}
+
+/* Error */
+.err-box{background:#fff5f5;border:0.5px solid #fca5a5;border-radius:8px;padding:12px 16px;color:#b91c1c;font-size:14px;display:none;margin-bottom:16px}
+.err-box.on{display:block}
+
+/* Results */
+#results{display:none;animation:fadeIn .5s ease}
+#results.on{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* Patient header */
+.pat-hdr{background:#fff;border:0.5px solid #e0ddd8;border-radius:12px;padding:20px 24px;margin-bottom:16px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.pat-av{width:48px;height:48px;background:#f0ede8;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.pat-name{font-size:20px;font-weight:600;color:#1a1a1a}
+.pat-meta{font-size:13px;color:#9c8f7a;margin-top:2px}
+.stats-row{margin-left:auto;display:flex;gap:10px;flex-wrap:wrap}
+.stat-pill{text-align:center;background:#fafaf8;border:0.5px solid #e0ddd8;border-radius:8px;padding:8px 16px}
+.stat-val{display:block;font-size:20px;font-weight:600;color:#1a1a1a}
+.stat-lbl{font-size:10px;color:#9c8f7a;text-transform:uppercase;letter-spacing:.08em}
+
+/* Copy card */
+.copy-card{background:#f0faf4;border:0.5px solid #a7d7b8;border-radius:12px;margin-bottom:16px;overflow:hidden}
+.copy-hdr{padding:14px 20px;border-bottom:0.5px solid #c6e8d0;display:flex;align-items:center;gap:8px}
+.copy-hdr-title{font-size:13px;font-weight:500;color:#166534}
+.copy-hdr-sub{font-size:12px;color:#9c8f7a}
+.copy-tabs{display:flex;background:#e8f5ee;border-bottom:0.5px solid #c6e8d0}
+.ctab{padding:10px 16px;font-size:12px;font-weight:500;color:#6b6258;cursor:pointer;border:none;border-bottom:2px solid transparent;background:none;transition:all .2s;font-family:inherit}
+.ctab.on{color:#166534;border-bottom-color:#16a34a}
+.ctab:hover{color:#1a1a1a}
+.cpane{display:none;padding:16px 20px}
+.cpane.on{display:block}
+.trigger-info{font-size:12px;color:#166534;background:#dcfce7;border:0.5px solid #a7d7b8;border-radius:6px;padding:8px 12px;margin-bottom:12px;line-height:1.6}
+.ctextarea{width:100%;background:#fff;border:0.5px solid #d4cfc8;border-radius:8px;color:#1a1a1a;font-family:inherit;font-size:14px;line-height:1.7;padding:12px 14px;resize:vertical;min-height:160px;outline:none}
+.ctextarea:focus{border-color:#16a34a;box-shadow:0 0 0 2px rgba(22,163,74,.1)}
+.btn-copy{display:inline-flex;align-items:center;gap:6px;margin-top:10px;padding:8px 20px;background:#fff;border:0.5px solid #a7d7b8;border-radius:6px;color:#166534;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-copy:hover{background:#dcfce7}
+.btn-copy.ok{color:#15803d;border-color:#86efac}
+
+/* Systems grid */
+.sys-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px}
+.sys-card{background:#fafaf8;border-radius:8px;padding:12px 14px}
+.sys-card.alto{border-left:3px solid #dc2626;padding-left:12px}
+.sys-card.moderado{border-left:3px solid #d97706;padding-left:12px}
+.sys-card.leve{border-left:3px solid #16a34a;padding-left:12px}
+.sys-name{font-size:13px;font-weight:500;color:#1a1a1a;margin-bottom:6px}
+.sys-bar-w{background:#e0ddd8;height:3px;border-radius:2px;margin-bottom:5px}
+.sys-bar{height:100%;border-radius:2px}
+.sys-card.alto .sys-bar{background:#dc2626}
+.sys-card.moderado .sys-bar{background:#d97706}
+.sys-card.leve .sys-bar{background:#16a34a}
+.sys-lv{font-size:11px;color:#6b6258}
+
+/* Top programs */
+.prog-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:0.5px solid #f0ede8}
+.prog-row:last-child{border:none}
+.p-rank{font-size:11px;color:#9c8f7a;width:20px;flex-shrink:0;text-align:right}
+.p-name{flex:1;font-size:14px;color:#1a1a1a}
+.p-bar-w{width:60px;height:3px;background:#e0ddd8;border-radius:2px;flex-shrink:0}
+.p-bar{height:100%;background:#b8860b;border-radius:2px}
+.p-cnt{font-size:12px;font-weight:500;color:#7a5e0a;background:#fdf3d0;padding:2px 8px;border-radius:6px;flex-shrink:0}
+
+/* Sintomas */
+.sint-item{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:0.5px solid #f0ede8}
+.sint-item:last-child{border:none}
+.dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+.dot.ok{background:#16a34a}
+.dot.pend{background:#d97706}
+.sint-nm{font-size:14px;font-weight:500;color:#1a1a1a}
+.sint-match{font-size:13px;color:#6b6258;font-style:italic;margin-top:2px}
+
+/* Freq badges */
+.freq-wrap{display:flex;flex-wrap:wrap;gap:8px}
+.fbadge{font-size:12px;padding:4px 10px;border-radius:6px;border:0.5px solid;font-weight:500}
+.fbadge.mhz{background:#fef2f2;border-color:#fca5a5;color:#b91c1c}
+.fbadge.eta{background:#fffbeb;border-color:#fcd34d;color:#92400e}
+.fbadge.etb{background:#eff6ff;border-color:#93c5fd;color:#1e40af}
+.fbadge.rife{background:#f0fdf4;border-color:#86efac;color:#166534}
+
+/* CUST */
+.cust-wrap{display:flex;flex-wrap:wrap;gap:8px}
+.cpill{font-size:13px;padding:4px 12px;border:0.5px solid #e0ddd8;border-radius:6px;color:#6b6258;background:#fafaf8;font-style:italic}
+
+/* Download */
+.btn-dl{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border:0.5px solid #c8c2b8;border-radius:8px;color:#1a1a1a;font-size:14px;cursor:pointer;transition:all .2s;background:#fff;font-family:inherit;text-decoration:none}
+.btn-dl:hover{background:#f5f3f0;border-color:#9c8f7a}
+.btn-dl.primary{background:#1a1a1a;color:#fff;border-color:#1a1a1a}
+.btn-dl.primary:hover{background:#2d2d2d}
+.btn-row{display:flex;justify-content:center;gap:12px;margin-top:12px;flex-wrap:wrap}
+.alert-strip{background:#fffbeb;border:0.5px solid #fcd34d;border-radius:8px;padding:12px 16px;font-size:13px;color:#92400e;line-height:1.6;margin-top:12px}
+
+@media(max-width:600px){.grid2,.grid3{grid-template-columns:1fr}.card{padding:20px 16px}.stats-row{margin-left:0;width:100%}}
+</style>
+</head>
+<body>
+<div class="app">
+
+<header>
+  <div class="eyebrow">Análise de Biofeedback Vibracional</div>
+  <div class="logo">Doctor <span>Spooky</span></div>
+  <div class="logo-sub">Reverse Lookup Decoder · Spooky2 GeneratorX</div>
+</header>
+
+<!-- FORM -->
+<div id="formSection">
+  <div class="card">
+    <div class="card-title">I. Dados do Paciente</div>
+    <div class="grid2" style="margin-bottom:20px">
+      <div><label>Nome completo</label><input type="text" id="nome" placeholder="Ex: Maria da Silva"></div>
+      <div><label>Data de Nascimento</label><input type="date" id="dob"></div>
+    </div>
+    <div class="grid3">
+      <div><label>Peso (kg)</label><input type="number" id="peso" placeholder="68" min="20" max="300"></div>
+      <div><label>Altura (cm)</label><input type="number" id="altura" placeholder="165" min="100" max="250"></div>
+      <div><label>IMC</label><div class="imc-out" id="imcOut">—</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">II. Queixas &amp; Histórico</div>
+    <div class="grid2">
+      <div><label>Sintomas principais (um por linha)</label><textarea id="sintomas" placeholder="Dor lombar crônica&#10;Cansaço intenso&#10;Insônia&#10;Sinusite frequente"></textarea></div>
+      <div><label>Histórico relevante</label><textarea id="historico" placeholder="Ex: Hipertensa há 5 anos, usa losartana. Histórico de sinusite. Operou vesícula em 2019."></textarea></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">III. Arquivo do Scan</div>
+    <div class="upload-zone" id="uploadZone">
+      <input type="file" id="fileInput" accept=".txt">
+      <div class="upload-icon">📡</div>
+      <div class="upload-title">Solte o arquivo aqui ou clique para selecionar</div>
+      <div class="upload-sub">Arquivo .txt do Reverse Lookup — Spooky2 GX</div>
+      <div class="upload-ok" id="uploadOk"></div>
+    </div>
+  </div>
+
+  <div class="err-box" id="errBox"></div>
+  <button class="btn-analyze" onclick="analyze()">✦ &nbsp; Gerar Laudo &nbsp; ✦</button>
+</div>
+
+<!-- LOADING -->
+<div class="loading" id="loading">
+  <div class="spin"></div>
+  <div class="load-txt" id="loadTxt">Lendo frequências...</div>
+</div>
+
+<!-- RESULTS -->
+<div id="results">
+
+  <div class="pat-hdr" id="patHdr"></div>
+
+  <!-- Copy card -->
+  <div class="copy-card" id="copyCard" style="display:none">
+    <div class="copy-hdr">
+      <span style="font-size:18px">📲</span>
+      <span class="copy-hdr-title">Resumo para Enviar ao Paciente</span>
+      <span class="copy-hdr-sub">— gerado pelo scan, sem base genérica</span>
+    </div>
+    <div class="copy-tabs">
+      <button class="ctab on" onclick="sTab('supl',this)">💊 Suplementos</button>
+      <button class="ctab" onclick="sTab('chas',this)">🍵 Chás</button>
+      <button class="ctab" onclick="sTab('dieta',this)">🥗 Dieta</button>
+      <button class="ctab" onclick="sTab('all',this)">📋 Tudo</button>
+    </div>
+    <div class="cpane on" id="p-supl">
+      <div class="trigger-info" id="triggerInfo"></div>
+      <textarea class="ctextarea" id="t-supl" readonly></textarea>
+      <button class="btn-copy" onclick="doCopy('supl',this)">⎘ &nbsp; COPIAR</button>
+    </div>
+    <div class="cpane" id="p-chas"><textarea class="ctextarea" id="t-chas" readonly></textarea><button class="btn-copy" onclick="doCopy('chas',this)">⎘ &nbsp; COPIAR</button></div>
+    <div class="cpane" id="p-dieta"><textarea class="ctextarea" id="t-dieta" readonly></textarea><button class="btn-copy" onclick="doCopy('dieta',this)">⎘ &nbsp; COPIAR</button></div>
+    <div class="cpane" id="p-all"><textarea class="ctextarea" id="t-all" readonly style="min-height:300px"></textarea><button class="btn-copy" onclick="doCopy('all',this)">⎘ &nbsp; COPIAR TUDO</button></div>
+  </div>
+
+  <!-- Systems -->
+  <div class="card">
+    <div class="card-title">Resposta por Sistemas Corporais</div>
+    <div class="sys-grid" id="sysGrid"></div>
+  </div>
+
+  <!-- Top programs -->
+  <div class="card">
+    <div class="card-title">Top 10 Programas — Maior Frequência</div>
+    <div id="progList"></div>
+  </div>
+
+  <!-- Sintomas -->
+  <div class="card" id="sintCard" style="display:none">
+    <div class="card-title">Cruzamento Sintomas × Scan</div>
+    <div id="sintList"></div>
+  </div>
+
+  <!-- Frequências -->
+  <div class="card">
+    <div class="card-title">Frequências-Hit Detectadas</div>
+    <div class="freq-wrap" id="freqWrap"></div>
+    <div style="margin-top:12px;font-size:13px;color:var(--text-dim);font-style:italic" id="freqSumm"></div>
+  </div>
+
+  <!-- CUST -->
+  <div class="card" id="custCard" style="display:none">
+    <div class="card-title">Programas CUST no Equipamento</div>
+    <div class="cust-wrap" id="custWrap"></div>
+  </div>
+
+  <!-- Download -->
+  <div class="card" style="text-align:center">
+    <div class="card-title" style="justify-content:center">Laudo Completo</div>
+    <p style="font-size:16px;color:var(--text-dim);font-style:italic;margin-bottom:20px">Análise detalhada por sistemas, protocolo 21 dias, suplementação e orientações completas.</p>
+    <div class="btn-row">
+      <button class="btn-dl primary" id="btnDl" onclick="gerarDocx()">⬇ &nbsp; Baixar Laudo (.docx)</button>
+      <button class="btn-dl" onclick="restart()" style="border-color:var(--text-dim);color:var(--text-dim)">↺ &nbsp; Novo Scan</button>
+    </div>
+    <div class="alert-strip">⚠️ Este laudo é experimental e tem finalidade exclusivamente complementar. Não substitui diagnóstico médico convencional. O Spooky2 não é aprovado pela ANVISA/FDA como dispositivo médico diagnóstico ou terapêutico.</div>
+  </div>
+
+</div><!-- /results -->
+</div><!-- /app -->
+
+<script>
+// ─────────────────────────────────────────────
+//  GLOBALS
+// ─────────────────────────────────────────────
+const MSGS = ['Lendo frequências do scan...','Identificando programas por sistema...','Cruzando sintomas com achados...','Calculando gatilhos vibracionais...','Compilando laudo personalizado...'];
+let msgIdx = 0, msgInt, currentPreview = null;
+
+// ─────────────────────────────────────────────
+//  IMC
+// ─────────────────────────────────────────────
+['peso','altura'].forEach(id => document.getElementById(id).addEventListener('input', calcIMC));
+function calcIMC() {
+  const p = parseFloat(document.getElementById('peso').value);
+  const h = parseFloat(document.getElementById('altura').value);
+  const el = document.getElementById('imcOut');
+  if (p > 0 && h > 0) {
+    const imc = (p / Math.pow(h / 100, 2)).toFixed(1);
+    const cl = imc < 18.5 ? 'Baixo peso' : imc < 25 ? 'Normal ✓' : imc < 30 ? 'Sobrepeso' : 'Obesidade';
+    el.textContent = imc + ' — ' + cl;
+  } else { el.textContent = '—'; }
+}
+
+// ─────────────────────────────────────────────
+//  UPLOAD
+// ─────────────────────────────────────────────
+const fi = document.getElementById('fileInput');
+fi.addEventListener('change', () => { if (fi.files[0]) document.getElementById('uploadOk').textContent = '✓ ' + fi.files[0].name; });
+const uz = document.getElementById('uploadZone');
+uz.addEventListener('dragover', e => { e.preventDefault(); uz.classList.add('over'); });
+uz.addEventListener('dragleave', () => uz.classList.remove('over'));
+uz.addEventListener('drop', e => {
+  e.preventDefault(); uz.classList.remove('over');
+  const f = e.dataTransfer.files[0];
+  if (f && f.name.endsWith('.txt')) {
+    const dt = new DataTransfer(); dt.items.add(f); fi.files = dt.files;
+    document.getElementById('uploadOk').textContent = '✓ ' + f.name;
+  }
+});
+
+// ─────────────────────────────────────────────
+//  ANALYZE
+// ─────────────────────────────────────────────
+async function analyze() {
+  const nome = document.getElementById('nome').value.trim();
+  const file = fi.files[0];
+  document.getElementById('errBox').className = 'err-box';
+  if (!nome) { showErr('Informe o nome do paciente.'); return; }
+  if (!file) { showErr('Selecione o arquivo .txt do Reverse Lookup.'); return; }
+
+  document.getElementById('formSection').style.display = 'none';
+  document.getElementById('loading').className = 'loading on';
+  msgIdx = 0;
+  msgInt = setInterval(() => { document.getElementById('loadTxt').textContent = MSGS[msgIdx++ % MSGS.length]; }, 1200);
+
+  try {
+    const txt = await file.text();
+    const data = extractData(txt);
+    const patient = {
+      nome,
+      dob: document.getElementById('dob').value,
+      peso: document.getElementById('peso').value,
+      altura: document.getElementById('altura').value,
+      sintomas: document.getElementById('sintomas').value,
+      historico: document.getElementById('historico').value,
+    };
+    const age = patient.dob ? Math.floor((new Date() - new Date(patient.dob)) / (365.25 * 24 * 3600 * 1000)) : null;
+    const imc = (patient.peso && patient.altura) ? (parseFloat(patient.peso) / Math.pow(parseFloat(patient.altura) / 100, 2)).toFixed(1) : null;
+    const recomendacoes = buildRec(data.systems);
+    currentPreview = { ...data, patient: { ...patient, age, imc }, recomendacoes };
+    clearInterval(msgInt);
+    document.getElementById('loading').className = 'loading';
+    renderResults(currentPreview);
+  } catch (e) {
+    clearInterval(msgInt);
+    document.getElementById('loading').className = 'loading';
+    document.getElementById('formSection').style.display = 'block';
+    showErr('Erro ao processar o arquivo: ' + e.message);
+  }
+}
+
+function showErr(m) {
+  const eb = document.getElementById('errBox');
+  eb.textContent = '⚠️ ' + m; eb.className = 'err-box on';
+}
+
+// ─────────────────────────────────────────────
+//  EXTRACT DATA
+// ─────────────────────────────────────────────
+function extractData(content) {
+  const lines = content.split('\n');
+  const meta = {};
+  lines.slice(0, 12).forEach(l => {
+    if (l.includes('Match tolerance:')) meta.tolerance = l.split(':')[1]?.trim();
+    if (l.includes('Include Harmonics:')) meta.harmonics = l.split(':')[1]?.trim();
+    if (l.includes('Databases Included:')) meta.databases = l.split(':')[1]?.trim();
+  });
+  const hits = (content.match(/Database matches for ([\d.]+) Hz:/g) || []).map(h => parseFloat(h.match(/([\d.]+) Hz/)[1]));
+  const pc = {};
+  lines.forEach(line => {
+    line = line.trim();
+    if (!line || /^(Database matches|Reverse|Match|Include|Harmonic|Database|-{3,})/.test(line)) return;
+    if (line.includes('(')) {
+      const name = line.replace(/\s*\(.*/, '').trim();
+      if (name && name.length > 2) pc[name] = (pc[name] || 0) + 1;
+    }
+  });
+  const top = Object.entries(pc).sort((a, b) => b[1] - a[1]).slice(0, 100).map(([name, count]) => ({ name, count }));
+  const custSet = new Set();
+  lines.forEach(l => { if (l.includes('(CUST)')) { const n = l.replace(/\s*\(CUST\).*/, '').trim(); if (n) custSet.add(n); } });
+  const systems = analyzeSystems(pc);
+  const totalMentions = Object.values(pc).reduce((a, b) => a + b, 0);
+  return { meta, hits, top10: top.slice(0, 10), topAll: top, custPrograms: [...custSet], systems, totalMentions, uniquePrograms: Object.keys(pc).length };
+}
+
+// ─────────────────────────────────────────────
+//  SYSTEMS
+// ─────────────────────────────────────────────
+function analyzeSystems(c) {
+  const sum = pts => { let t = 0; Object.keys(c).forEach(k => { if (pts.some(p => k.toLowerCase().includes(p.toLowerCase()))) t += c[k]; }); return t; };
+  const defs = [
+    { id: 'infeccioso',    name: '🦠 Infeccioso / Imunológico',   pts: ['Borreli','Babesia','Lyme','Bacteria','Virus','Infection','Hepatitis','Parasite','Actinomyc','Immune','Bacillinum','Tularemia','Bartonella','Ehrlich','Herpes','Influenza','Coronavirus','Streptoc','Staphyloc','Klebsiella'] },
+    { id: 'neurologico',   name: '🧠 Neurológico / Emocional',    pts: ['Stress','Depression','Cerebral','Brain','Insomnia','Sclerosis','Neuralgia','Epilepsy','Fear','Trauma','Delta','Theta','Alpha','Beta','Emotion','Stroke','Overcoming','Multiple Sclerosis','Alzheimer','Memory','Dementia','Palsy'] },
+    { id: 'musculo',       name: '🦴 Musculoesquelético',         pts: ['Arthritis','Fibromyalgia','Spondylitis','Bone','Joint','Injuries','Rheumatoid','Osteo','Lumbago','Myositis','Epicondylitis','Tennis Elbow','Backache','Bursitis'] },
+    { id: 'respiratorio',  name: '🫁 Respiratório',               pts: ['Sinusitis','Asthma','Cough','Bronchitis','Pneumonia','Rhinitis','Tonsillitis','Pertussis','Laryngitis','Diphtheria','Emphysema','Whooping'] },
+    { id: 'cardiovascular',name: '❤️ Cardiovascular',             pts: ['Hypertension','Pericarditis','Cardiac','Angina','Arteriosclerosis','Atherosclerosis','Vasculitis','Varix','Mitral','Arrhythmia','Hypertonia'] },
+    { id: 'renal',         name: '🫘 Renal / Urinário',           pts: ['Kidney','Nephritis','Urinary','Cystitis','Pyelonephritis','Prostate','Bladder','Urethritis','Enuresis'] },
+    { id: 'digestivo',     name: '🍽️ Digestivo / Hepático',      pts: ['Dyspepsia','Gastritis','Colitis','Liver','Hepatitis','Esophagitis','Peracidity','Disbacteriosis','Pancreatic','Diverticulitis','Crohn','Hernia','Jaundice','Hemorrhoid'] },
+    { id: 'ocular',        name: '👁️ Ocular',                    pts: ['Cataract','Glaucoma','Vision','Retina','Blepharitis','Strabismus','Amblyopia','Hemeralopia'] },
+    { id: 'pele',          name: '🩹 Pele / Tegumento',           pts: ['Psoriasis','Pemphigus','Dermatitis','Eczema','Fungus','Vitiligo','Trichophyton','Acne','Alopecia','Furunculosis','Onychomycosis'] },
+    { id: 'reprodutivo',   name: '🌸 Reprodutivo Feminino',       pts: ['Adnexitis','Ovarian','Uterine','Dysmenorrhea','Fibroids','Myoma','Endometri','Salpingitis','Menopause','Sexual regul'] },
+    { id: 'energia',       name: '⚡ Energia / Vitalidade',       pts: ['Fatigue','Energizing','Adynamia','Chronic Fatigue','Vitamin Deficiency','Avitaminosis','Sportive'] },
+    { id: 'detox',         name: '🧹 Detox / Parasitas',          pts: ['Detox','Heavy Metal','Toxin','Parasite','Parasites','Flukes','Tapeworm','Taenia','Nematoda','Trematode','Roundworm','Trichinosis','Cyclospora','Toxoplasm','Babesia'] },
+  ];
+  return defs.map(d => { const score = sum(d.pts); return { ...d, score, level: score >= 400 ? 'ALTO' : score >= 150 ? 'MODERADO' : 'LEVE' }; }).sort((a, b) => b.score - a.score);
+}
+
+// ─────────────────────────────────────────────
+//  RECOMMENDATIONS
+// ─────────────────────────────────────────────
+const REC_DB = {
+  infeccioso: {
+    s: ['🌿 Própolis extrato seco — 300–500mg/dia (antimicrobiano natural)', '🧄 Alho cru ou em cápsula — 2–3 dentes/dia', '💊 NAC (N-Acetil Cisteína) — 600mg 2x/dia (destrói biofilmes)', '🛡️ Zinco quelado — 15–30mg/dia (imunidade)'],
+    c: ['🍋 Chá de gengibre com limão — 2x/dia', '🌿 Chá de orégano — 1x/dia (antibacteriano)', '🫚 Própolis spray — manhã e noite'],
+    d: ['✅ Alho cru diariamente', '✅ Probióticos: kefir, kombucha, iogurte natural', '✅ Cúrcuma com pimenta preta nas refeições', '❌ Eliminar açúcar refinado', '❌ Sem álcool durante o protocolo']
+  },
+  neurologico: {
+    s: ['🐟 Ômega-3 EPA+DHA — 1.000–2.000mg/dia (neuroproteção)', '😌 Ashwagandha KSM-66 — 300–600mg/dia (reduz cortisol)', '🧠 Magnésio L-Treonato — 144mg Mg/dia (barreira hematoencefálica)', '😴 5-HTP — 100mg à noite (serotonina e sono)', '⚡ Vitamina B Complex — 1 cápsula/dia (neurotransmissores)'],
+    c: ['🌼 Chá de camomila — à noite, antes de dormir', '🌺 Chá de maracujá — à tarde ou à noite', '🌿 Chá de melissa (erva-cidreira) — 2x/dia para ansiedade'],
+    d: ['✅ Banana, castanhas e chocolate amargo 70%+ (serotonina)', '✅ Sardinha ou salmão 3x/semana', '✅ Nozes e abacate (gorduras boas para o cérebro)', '❌ Reduzir cafeína após 14h', '❌ Evitar ultraprocessados e corantes']
+  },
+  musculo: {
+    s: ['🦴 Colágeno Hidrolisado Tipo II — 10g/dia (cartilagem)', '🌿 Cúrcuma com Piperina (extrato) — 500mg 2x/dia (anti-inflamatório)', '💊 MSM (Metilsulfonilmetano) — 1.000–2.000mg/dia (articulações)', '🔥 Magnésio Glicinato — 300mg/noite (relaxamento muscular)'],
+    c: ['🌿 Chá de cúrcuma com gengibre — 2x/dia', '🍃 Chá de cavalinha — 1x/dia (minerais)', '🌼 Compressa de arnica — nas dores localizadas'],
+    d: ['✅ Caldo de ossos (colágeno natural)', '✅ Cúrcuma fresca ou em pó nas refeições', '✅ Abacaxi e mamão (enzimas anti-inflamatórias)', '❌ Evitar frituras, embutidos e gorduras trans']
+  },
+  respiratorio: {
+    s: ['💊 Vitamina C — 1.000–2.000mg/dia', '🫁 NAC (N-Acetil Cisteína) — 600mg/dia (mucolítico)', '🌿 Quercetina — 500mg 2x/dia (anti-histamínico)', '🛡️ Zinco quelado — 15–30mg/dia'],
+    c: ['🍋 Chá de gengibre, mel e limão — 3x/dia', '🌿 Chá de eucalipto (inalação) — manhã e noite', '🌼 Chá de guaco — 2x/dia (broncodilatador natural)', '🫚 Mel puro com própolis — 1 colher em jejum'],
+    d: ['✅ Mel puro diariamente', '✅ Alho e cebola crus', '✅ Gengibre fresco nas refeições', '❌ Evitar laticínios em excesso (muco)']
+  },
+  cardiovascular: {
+    s: ['❤️ CoQ10 — 100–200mg/dia (suporte cardíaco)', '🐟 Ômega-3 alta dose — 2.000–3.000mg EPA+DHA', '💊 Magnésio Taurato — 400mg/dia (coração)', '🌿 Vitamina D3 + K2 — suporte cardiovascular'],
+    c: ['🌿 Chá de hibisco — 2x/dia (reduz pressão)', '🍃 Chá verde — 1–2x/dia (antioxidante vascular)', '🫚 Suco de beterraba — copo pequeno pela manhã'],
+    d: ['✅ Salmão, sardinha, atum (Ômega-3)', '✅ Beterraba, alho, azeite extravirgem', '✅ Uva roxa, mirtilo (antioxidantes)', '❌ Reduzir sódio (embutidos, enlatados)', '❌ Evitar gorduras trans e frituras']
+  },
+  renal: {
+    s: ['💧 Aumentar hidratação — 2,5–3L de água/dia (principal)', '🌿 Extrato de cavalinha — 300mg/dia (diurético)', '🍒 Extrato de cranberry (PAC 36mg) — 1–2x/dia'],
+    c: ['🌿 Chá de cavalinha — 2x/dia', '🍃 Chá de dente-de-leão — 1x/dia', '🫐 Suco de cranberry sem açúcar — 1x/dia'],
+    d: ['✅ 2,5–3 litros de água por dia (mínimo)', '✅ Frutas vermelhas (cranberry, morango)', '✅ Melancia e pepino (diuréticos naturais)', '❌ Reduzir proteína animal em excesso', '❌ Evitar refrigerantes']
+  },
+  digestivo: {
+    s: ['🦠 Probiótico amplo espectro — 10–30 bilhões UFC/dia', '💊 L-Glutamina — 5g/dia em jejum (mucosa intestinal)', '🌿 Cardo Mariano Silimarina 70% — 200–400mg 2x/dia', '🧪 Enzimas digestivas — com as refeições'],
+    c: ['🌼 Chá de camomila — antes das refeições', '🌿 Chá de alcachofra — 2x/dia (fígado)', '🍋 Água morna com limão — em jejum', '🌱 Chá de boldo — 1x/dia (digestão)'],
+    d: ['✅ Kefir, iogurte natural, kombucha', '✅ Mamão, abacaxi, kiwi (enzimas)', '✅ Fibras: aveia, linhaça, chia', '❌ Evitar alimentos muito ácidos em excesso', '❌ Evitar álcool e frituras']
+  },
+  ocular: {
+    s: ['👁️ Luteína + Zeaxantina — 10mg + 2mg/dia', '🫐 Extrato de mirtilo — 160mg/dia', '🐟 Ômega-3 — 1.000mg/dia (retina)', '🥕 Vitamina A (beta-caroteno) — 5.000–10.000 UI/dia'],
+    c: ['🌼 Compressa de camomila morna — olhos cansados', '🫐 Suco de mirtilo fresco — 1x/dia', '🍃 Chá verde — 1x/dia (catequinas)'],
+    d: ['✅ Cenoura, espinafre, couve (luteína + vitamina A)', '✅ Ovos (luteína biodisponível)', '✅ Mirtilo, uva roxa, acerola', '❌ Reduzir açúcar (glicação do cristalino)']
+  },
+  pele: {
+    s: ['💊 Zinco quelado — 30mg/dia (pele e unhas)', '🌟 Biotina B7 — 2.500–5.000mcg/dia', '🌿 Extrato de orégano (carvacrol) — 150–200mg/dia (fungos)', '🐟 Ômega-3 — 1.000–2.000mg/dia (hidratação)'],
+    c: ['🌿 Chá de bardana — 2x/dia (depurativo)', '🌼 Compressa de calêndula — nas lesões', '🍃 Chá verde — 2x/dia (antioxidante)'],
+    d: ['✅ Cenoura e abóbora (vitamina A)', '✅ Sementes de abóbora (zinco natural)', '✅ Abacate e nozes (gorduras boas)', '❌ Reduzir açúcar (piora acne e inflamação)', '❌ Evitar leite de vaca em excesso']
+  },
+  reprodutivo: {
+    s: ['🌿 Vitex Agnus Castus — 200–400mg/dia (regulação hormonal)', '🌱 DIM (Diindolilmetano) — 100–200mg/dia (estrogênio)', '🌾 Linhaça dourada — 2 colheres de sopa/dia', '🐟 Ômega-3 — 1.000–2.000mg/dia (cólicas e inflamação)', '💊 Ácido Fólico + B12 — dose terapêutica diária'],
+    c: ['🌿 Chá de gengibre — 2x/dia (cólica menstrual)', '🌼 Chá de camomila — à noite (cólica e TPM)', '🍃 Chá de macela — 2x/dia (regulação hormonal)'],
+    d: ['✅ Linhaça diária (2 colheres)', '✅ Brócolis, couve, repolho (DIM natural)', '✅ Salmão e sardinha (Ômega-3)', '❌ Evitar plásticos aquecidos (xenoestrogênios)', '❌ Reduzir carne vermelha e embutidos']
+  },
+  energia: {
+    s: ['⚡ Vitamina B12 sublingual — 1.000–2.000mcg/dia', '🌱 Maca Peruana — 1.500–3.000mg/dia', '💊 CoQ10 — 100mg/dia (produção de ATP)', '🌿 Ashwagandha KSM-66 — 300–600mg/dia', '🔋 Vitamina D3 — 2.000–5.000 UI/dia'],
+    c: ['🌿 Chá verde — manhã (energia sem pico)', '🌱 Chá de hibisco com gengibre — tarde'],
+    d: ['✅ Café da manhã proteico: ovos, abacate, queijo', '✅ Spirulina e chlorella (1 colher/dia)', '✅ Banana e tâmara (energia natural)', '❌ Evitar carboidratos simples de manhã', '❌ Reduzir cafeína excessiva']
+  },
+  detox: {
+    s: ['🌿 Clorela (Chlorella) — 3–5g/dia (metais pesados)', '💊 NAC (N-Acetil Cisteína) — 600mg 2x/dia (glutationa)', '🌱 Carvão Ativado — 500mg longe das refeições (primeiros 7 dias)', '🌿 Extrato de Noz Preta (Black Walnut) — antiparasitário'],
+    c: ['🍋 Água morna com limão — em jejum', '🌿 Chá de dente-de-leão — 2x/dia', '🍃 Chá de alcachofra — 2x/dia (drenagem hepática)', '🌱 Chá de bardana — 1x/dia'],
+    d: ['✅ 3 litros de água/dia (essencial no detox)', '✅ Sementes de abóbora em jejum (antiparasitário)', '✅ Mamão com sementes, alho cru', '✅ Caldo de vegetais diariamente', '❌ Eliminar açúcar e álcool durante o protocolo', '❌ Evitar carne crua ou mal passada']
+  },
+};
+
+function buildRec(systems) {
+  const sc = id => (systems.find(s => s.id === id) || {}).score || 0;
+  const has = (id, min) => sc(id) >= min;
+
+  const triggers = {
+    D3:   has('infeccioso',150) || has('musculo',150) || has('neurologico',150) || has('cardiovascular',150),
+    Mg:   has('neurologico',150) || has('musculo',150) || has('cardiovascular',150),
+    Om3:  has('cardiovascular',150) || has('neurologico',150) || has('musculo',150) || has('reprodutivo',100),
+    Pb:   has('infeccioso',150) || has('digestivo',150) || has('detox',150),
+    Zn:   has('infeccioso',150) || has('respiratorio',150) || has('pele',100),
+    VitC: has('infeccioso',150) || has('respiratorio',150) || has('pele',100) || has('detox',150) || has('energia',100),
+  };
+
+  const baseS = [], triggerLabels = [];
+  if (triggers.D3)   { baseS.push('🟡 Vitamina D3 + K2 — 2.000–5.000 UI + 100mcg/dia'); triggerLabels.push('D3+K2 ▸ imunidade/ósseo/neurológico'); }
+  if (triggers.Mg)   { baseS.push('🟡 Magnésio Glicinato — 300–400mg à noite'); triggerLabels.push('Magnésio ▸ SNC/muscular/cardiovascular'); }
+  if (triggers.Om3)  { baseS.push('🟡 Ômega-3 EPA+DHA — 1.000–2.000mg/dia'); triggerLabels.push('Ômega-3 ▸ cardiovascular/neurológico/muscular'); }
+  if (triggers.Pb)   { baseS.push('🟡 Probiótico amplo espectro — 10–30 bilhões UFC/dia'); triggerLabels.push('Probiótico ▸ microbiota/detox/imunidade'); }
+  if (triggers.Zn)   { baseS.push('🟡 Zinco quelado — 15–30mg/dia'); triggerLabels.push('Zinco ▸ infeccioso/respiratório/pele'); }
+  if (triggers.VitC) { baseS.push('🟡 Vitamina C — 1.000–2.000mg/dia'); triggerLabels.push('Vitamina C ▸ imunidade/antioxidante/detox'); }
+
+  const baseC = ['💧 Água: mínimo 2,5–3 litros por dia'];
+  const baseD = [];
+  const active = systems.filter(s => s.level !== 'LEVE' && s.score > 0).slice(0, 5);
+  if (active.length > 0) {
+    baseD.push('✅ Priorizar alimentos naturais e não processados');
+    baseD.push('✅ Incluir proteína de qualidade em todas as refeições');
+  }
+  if (has('infeccioso',150) || has('detox',150) || has('digestivo',150)) {
+    baseD.push('❌ Eliminar açúcar refinado durante o protocolo');
+    baseD.push('❌ Evitar álcool durante o protocolo (21 dias)');
+  }
+
+  const S = new Set(baseS), C = new Set(baseC), D = new Set(baseD);
+  active.forEach(s => {
+    const r = REC_DB[s.id]; if (!r) return;
+    r.s.forEach(x => S.add(x)); r.c.forEach(x => C.add(x)); r.d.forEach(x => D.add(x));
+  });
+
+  return { suplementos: [...S], chas: [...C], dieta: [...D], activeSystems: active.map(s => s.name), triggerLabels, totalBase: baseS.length };
+}
+
+// ─────────────────────────────────────────────
+//  RENDER
+// ─────────────────────────────────────────────
+function renderResults(prev) {
+  const { patient, systems, top10, custPrograms, hits, recomendacoes } = prev;
+
+  // Patient header
+  const age = patient.age ? patient.age + ' anos' : '';
+  const imcT = patient.imc ? 'IMC ' + patient.imc : '';
+  const meta = [age, imcT].filter(Boolean).join(' · ') || 'Scan de Biofeedback Spooky2';
+  document.getElementById('patHdr').innerHTML = `
+    <div class="pat-av">🔬</div>
+    <div><div class="pat-name">${patient.nome || 'Paciente'}</div><div class="pat-meta">${meta}</div></div>
+    <div class="stats-row">
+      <div class="stat-pill"><span class="stat-val">${hits.length}</span><span class="stat-lbl">Hits</span></div>
+      <div class="stat-pill"><span class="stat-val">${(prev.totalMentions || 0).toLocaleString('pt-BR')}</span><span class="stat-lbl">Menções</span></div>
+      <div class="stat-pill"><span class="stat-val">${systems.filter(s => s.level === 'ALTO').length}</span><span class="stat-lbl">Alto</span></div>
+    </div>`;
+
+  // Build copy texts
+  const nome = patient.nome || 'você';
+  const hoje = new Date().toLocaleDateString('pt-BR');
+  const hdr = `🌿 *PROTOCOLO DE SAÚDE — ${nome.toUpperCase()}*\n📅 ${hoje}\n\n`;
+  const ts = `💊 *SUPLEMENTOS RECOMENDADOS*\n\n${recomendacoes.suplementos.join('\n')}\n\n⚠️ Consulte seu médico antes de iniciar qualquer suplemento.`;
+  const tc = `🍵 *CHÁS E INFUSÕES*\n\n${recomendacoes.chas.join('\n')}`;
+  const td = `🥗 *ORIENTAÇÕES DE DIETA*\n\n${recomendacoes.dieta.join('\n')}`;
+  const tall = hdr + ts + '\n\n' + '─'.repeat(30) + '\n\n' + tc + '\n\n' + '─'.repeat(30) + '\n\n' + td + '\n\n─────────────────────────\n💧 *LEMBRE-SE:* Beba no mínimo 2,5 litros de água por dia durante o protocolo.\n\n_Laudo gerado por Doctor Spooky · Nanda Carvalho_';
+  document.getElementById('t-supl').value = ts;
+  document.getElementById('t-chas').value = tc;
+  document.getElementById('t-dieta').value = td;
+  document.getElementById('t-all').value = tall;
+
+  // Trigger info
+  const ti = document.getElementById('triggerInfo');
+  if (recomendacoes.totalBase === 0) {
+    ti.innerHTML = '⚠️ Nenhum suplemento base foi indicado — o scan não apresentou gatilhos suficientes para a base vitamínica.';
+  } else {
+    ti.innerHTML = '<strong>Suplementos base justificados pelo scan:</strong><br>' + recomendacoes.triggerLabels.join(' &nbsp;·&nbsp; ');
+  }
+  document.getElementById('copyCard').style.display = 'block';
+
+  // Systems
+  const maxSc = Math.max(...systems.map(s => s.score), 1);
+  document.getElementById('sysGrid').innerHTML = systems.filter(s => s.score > 0).slice(0, 10).map(s => `
+    <div class="sys-card ${s.level.toLowerCase()}">
+      <div class="sys-name">${s.name}</div>
+      <div class="sys-bar-w"><div class="sys-bar" style="width:${Math.round(s.score / maxSc * 100)}%"></div></div>
+      <div class="sys-lv">${s.level} · ${s.score.toLocaleString('pt-BR')} pts</div>
+    </div>`).join('');
+
+  // Top 10
+  const maxCt = top10[0]?.count || 1;
+  document.getElementById('progList').innerHTML = top10.map((p, i) => `
+    <div class="prog-row">
+      <span class="p-rank">${i + 1}°</span>
+      <span class="p-name">${p.name}</span>
+      <div class="p-bar-w"><div class="p-bar" style="width:${Math.round(p.count / maxCt * 100)}%"></div></div>
+      <span class="p-cnt">${p.count}×</span>
+    </div>`).join('');
+
+  // Sintomas
+  const sints = patient.sintomas ? patient.sintomas.split('\n').map(s => s.trim()).filter(Boolean) : [];
+  if (sints.length > 0) {
+    document.getElementById('sintCard').style.display = 'block';
+    document.getElementById('sintList').innerHTML = sints.map(s => {
+      const match = top10.filter(p => p.name.toLowerCase().includes(s.toLowerCase().split(' ')[0]) || s.toLowerCase().includes(p.name.toLowerCase().split(' ')[0]));
+      const ok = match.length > 0;
+      return `<div class="sint-item">
+        <div class="dot ${ok ? 'ok' : 'pend'}"></div>
+        <div>
+          <div class="sint-nm">${s}</div>
+          <div class="sint-match">${ok ? '✓ Confirmado vibracionalmente: ' + match.map(p => `${p.name} (${p.count}×)`).join(', ') : 'Registrado — verificar nos sistemas de maior resposta'}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Frequencies
+  document.getElementById('freqWrap').innerHTML = hits.map(hz => {
+    let cls, lb;
+    if (hz > 1000000) { cls = 'mhz'; lb = hz.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' Hz — MHz/DNA'; }
+    else if (hz > 100000) { cls = 'eta'; lb = hz.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' Hz — ETDF Alta'; }
+    else if (hz > 20000) { cls = 'etb'; lb = hz.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' Hz — ETDF Baixa'; }
+    else { cls = 'rife'; lb = hz.toLocaleString('pt-BR', { maximumFractionDigits: 0 }) + ' Hz — Rife Clássico'; }
+    return `<span class="fbadge ${cls}">${lb}</span>`;
+  }).join('');
+  const mhz = hits.filter(h => h > 1000000).length;
+  const etA = hits.filter(h => h > 100000 && h <= 1000000).length;
+  const etB = hits.filter(h => h >= 20000 && h <= 100000).length;
+  const rife = hits.filter(h => h < 20000).length;
+  document.getElementById('freqSumm').textContent = `Distribuição: ${mhz} MHz (molecular) · ${etA} ETDF Alta · ${etB} ETDF Baixa · ${rife} Rife Clássico`;
+
+  // CUST
+  if (custPrograms.length > 0) {
+    document.getElementById('custCard').style.display = 'block';
+    document.getElementById('custWrap').innerHTML = custPrograms.map(c => `<span class="cpill">${c}</span>`).join('');
+  }
+
+  document.getElementById('results').className = 'on';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ─────────────────────────────────────────────
+//  COPY
+// ─────────────────────────────────────────────
+function sTab(id, el) {
+  document.querySelectorAll('.ctab').forEach(t => t.className = 'ctab');
+  document.querySelectorAll('.cpane').forEach(p => p.className = 'cpane');
+  el.className = 'ctab on';
+  document.getElementById('p-' + id).className = 'cpane on';
+}
+
+async function doCopy(id, btn) {
+  const val = document.getElementById('t-' + id).value;
+  try { await navigator.clipboard.writeText(val); }
+  catch { const ta = document.getElementById('t-' + id); ta.select(); document.execCommand('copy'); }
+  const orig = btn.innerHTML;
+  btn.innerHTML = '✓ &nbsp; COPIADO!'; btn.classList.add('ok');
+  setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('ok'); }, 2000);
+}
+
+// ─────────────────────────────────────────────
+//  DOCX GENERATION (browser, sem servidor)
+// ─────────────────────────────────────────────
+async function gerarDocx() {
+  if (!currentPreview) return;
+  const btn = document.getElementById('btnDl');
+  btn.textContent = '⏳ Gerando...';
+  btn.disabled = true;
+  try {
+    const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
+            AlignmentType, BorderStyle, WidthType, ShadingType, VerticalAlign, PageBreak, LevelFormat } = docx;
+
+    const prev = currentPreview;
+    const { patient, systems, top10, hits, custPrograms, recomendacoes } = prev;
+    const today = new Date().toLocaleDateString('pt-BR');
+    const age = patient.age ? patient.age + ' anos' : '';
+    const imc = patient.imc ? 'IMC ' + patient.imc : '';
+    const sintomasArr = patient.sintomas ? patient.sintomas.split('\n').map(s => s.trim()).filter(Boolean) : [];
+
+    const C_DARK='1A1A2E', C_BLUE='1E3A5F', C_GOLD='C9A84C', C_WHITE='FFFFFF', C_RED_BG='FFF0F0', C_NOTE_BG='FDF6E3';
+    const bdr = { style: BorderStyle.SINGLE, size: 1, color: 'CCCCCC' };
+    const bdrs = { top: bdr, bottom: bdr, left: bdr, right: bdr };
+
+    const h = (text, size=26, color=C_BLUE, before=240, after=120) => new Paragraph({ spacing:{before,after}, children:[new TextRun({text,bold:true,size,color,font:'Arial'})] });
+    const p = (text, size=22, color=C_DARK) => new Paragraph({ spacing:{before:60,after:60}, children:[new TextRun({text,size,font:'Arial',color})] });
+    const sp = () => new Paragraph({ spacing:{before:60,after:60}, children:[new TextRun('')] });
+    const secH = text => new Table({ width:{size:9360,type:WidthType.DXA}, columnWidths:[9360], rows:[new TableRow({ children:[new TableCell({ borders:bdrs, width:{size:9360,type:WidthType.DXA}, shading:{fill:C_BLUE,type:ShadingType.CLEAR}, margins:{top:140,bottom:140,left:200,right:200}, children:[new Paragraph({ alignment:AlignmentType.CENTER, children:[new TextRun({text,size:26,font:'Arial',bold:true,color:C_WHITE})] })] })] })] });
+    const alertB = text => new Table({ width:{size:9360,type:WidthType.DXA}, columnWidths:[9360], rows:[new TableRow({ children:[new TableCell({ borders:bdrs, width:{size:9360,type:WidthType.DXA}, shading:{fill:C_RED_BG,type:ShadingType.CLEAR}, margins:{top:120,bottom:120,left:160,right:160}, children:[new Paragraph({ children:[new TextRun({text:'⚠️  '+text,size:20,font:'Arial',color:'8B0000',bold:true})] })] })] })] });
+    const noteB = text => new Table({ width:{size:9360,type:WidthType.DXA}, columnWidths:[9360], rows:[new TableRow({ children:[new TableCell({ borders:bdrs, width:{size:9360,type:WidthType.DXA}, shading:{fill:C_NOTE_BG,type:ShadingType.CLEAR}, margins:{top:120,bottom:120,left:160,right:160}, children:[new Paragraph({ children:[new TextRun({text:'ℹ️  '+text,size:20,font:'Arial',color:'5D4037'})] })] })] })] });
+    const mkTable = (headers, rows, widths, hBg=C_DARK) => {
+      const tw = widths.reduce((a,b)=>a+b,0);
+      return new Table({ width:{size:tw,type:WidthType.DXA}, columnWidths:widths, rows:[
+        new TableRow({ tableHeader:true, children:headers.map((hh,i)=>new TableCell({ borders:bdrs, width:{size:widths[i],type:WidthType.DXA}, shading:{fill:hBg,type:ShadingType.CLEAR}, margins:{top:80,bottom:80,left:120,right:120}, verticalAlign:VerticalAlign.CENTER, children:[new Paragraph({ alignment:AlignmentType.CENTER, children:[new TextRun({text:hh,bold:true,size:20,color:C_WHITE,font:'Arial'})] })] }))}),
+        ...rows.map((row,ri)=>new TableRow({ children:row.map((cell,ci)=>new TableCell({ borders:bdrs, width:{size:widths[ci],type:WidthType.DXA}, shading:{fill:ri%2===0?'F8F8F8':C_WHITE,type:ShadingType.CLEAR}, margins:{top:80,bottom:80,left:120,right:120}, children:[new Paragraph({ children:[new TextRun({text:String(cell),size:20,font:'Arial'})] })] }))}))
+      ]});
+    };
+
+    const children = [];
+
+    // CAPA
+    children.push(
+      new Paragraph({spacing:{before:400,after:0},children:[]}),
+      new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:0,after:60},children:[new TextRun({text:'DOCTOR SPOOKY',size:52,bold:true,color:C_DARK,font:'Arial'})]}),
+      new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:0,after:40},border:{bottom:{style:BorderStyle.SINGLE,size:6,color:C_GOLD,space:4}},children:[new TextRun({text:'LAUDO DE BIOFEEDBACK VIBRACIONAL — SPOOKY2 GX',size:20,color:C_GOLD,font:'Arial',bold:true})]}),
+      sp(),
+      new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:60,after:20},children:[new TextRun({text:'Paciente: ',size:26,bold:true,font:'Arial',color:C_BLUE}),new TextRun({text:patient.nome||'—',size:26,font:'Arial',color:C_DARK})]}),
+      ...(age?[new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:10,after:10},children:[new TextRun({text:`Idade: ${age}`,size:22,font:'Arial',color:C_DARK})]})]:[]),
+      ...(imc?[new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:10,after:10},children:[new TextRun({text:`${imc}  |  Peso: ${patient.peso}kg  |  Altura: ${patient.altura}cm`,size:22,font:'Arial',color:C_DARK})]})]:[]),
+      new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:10,after:10},children:[new TextRun({text:`Data do Laudo: ${today}`,size:22,font:'Arial',color:C_DARK})]}),
+      new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:10,after:10},children:[new TextRun({text:'Responsável: Nanda Carvalho',size:22,font:'Arial',color:C_DARK})]}),
+      sp(),sp(),
+      mkTable(['PARÂMETRO','VALOR'],[
+        ['Frequências-Hit',`${hits.length} hits`],
+        ['Total de Menções',`${(prev.totalMentions||0).toLocaleString('pt-BR')}`],
+        ['Programas Únicos',`${(prev.uniquePrograms||0).toLocaleString('pt-BR')}`],
+        ['Sintomas Informados', sintomasArr.length>0?sintomasArr.join(', '):'Não informados'],
+        ...(patient.historico?[['Histórico',patient.historico]]:[]),
+      ],[3000,6360],C_BLUE),
+      sp(),sp(),
+      alertB('AVISO LEGAL: Este laudo é experimental e complementar. Não substitui diagnóstico médico convencional. O Spooky2 não é aprovado pela ANVISA/FDA como dispositivo médico.'),
+      new Paragraph({children:[new PageBreak()]})
+    );
+
+    // SISTEMAS
+    children.push(
+      secH('1. RESPOSTA POR SISTEMAS CORPORAIS'), sp(),
+      mkTable(['SISTEMA','NÍVEL','SCORE'],systems.filter(s=>s.score>0).slice(0,12).map(s=>[s.name,s.level,s.score.toLocaleString('pt-BR')]),[3500,1800,4060],C_DARK),
+      sp(), new Paragraph({children:[new PageBreak()]})
+    );
+
+    // TOP PROGRAMAS
+    children.push(
+      secH('2. TOP 10 PROGRAMAS — MAIOR FREQUÊNCIA'), sp(),
+      mkTable(['POS.','PROGRAMA','OCORRÊNCIAS'],top10.map((p,i)=>[`${i+1}°`,p.name,`${p.count}×`]),[600,7360,1400],C_DARK),
+      sp(), new Paragraph({children:[new PageBreak()]})
+    );
+
+    // SINTOMAS
+    if (sintomasArr.length > 0) {
+      children.push(secH('3. CRUZAMENTO: SINTOMAS × SCAN'), sp());
+      sintomasArr.forEach(s => {
+        const match = top10.filter(pp=>pp.name.toLowerCase().includes(s.toLowerCase().split(' ')[0]));
+        children.push(new Paragraph({spacing:{before:60,after:60},children:[
+          new TextRun({text:`• ${s}: `,size:22,font:'Arial',bold:true,color:C_BLUE}),
+          new TextRun({text:match.length>0?`Confirmado vibracionalmente — ${match.map(pp=>`${pp.name} (${pp.count}×)`).join(', ')}`:'Registrado — verificar sistemas de maior resposta',size:22,font:'Arial'})
+        ]}));
+      });
+      children.push(sp(), new Paragraph({children:[new PageBreak()]}));
+    }
+
+    // SUPLEMENTOS / CHÁS / DIETA
+    children.push(secH('4. SUPLEMENTOS, CHÁS E DIETA — RESUMO PRÁTICO'), sp());
+    if (recomendacoes.triggerLabels && recomendacoes.triggerLabels.length > 0) {
+      children.push(noteB('Suplementos base justificados pelo scan: ' + recomendacoes.triggerLabels.join(' · ')), sp());
+    }
+    children.push(h('💊 Suplementos Recomendados'));
+    recomendacoes.suplementos.forEach(s => children.push(p('  '+s)));
+    children.push(sp(), h('🍵 Chás e Infusões'));
+    recomendacoes.chas.forEach(c => children.push(p('  '+c)));
+    children.push(sp(), h('🥗 Orientações de Dieta'));
+    recomendacoes.dieta.forEach(d => children.push(p('  '+d, 22, d.startsWith('✅')?'1a4a2e':d.startsWith('❌')?'7a1a1a':C_DARK)));
+    children.push(sp(), alertB('Nenhum suplemento deve ser iniciado sem orientação médica, especialmente se houver uso de medicamentos contínuos.'), sp(), new Paragraph({children:[new PageBreak()]}));
+
+    // FREQUÊNCIAS
+    children.push(
+      secH('5. FREQUÊNCIAS-HIT DETECTADAS'), sp(),
+      mkTable(['FREQUÊNCIA (Hz)','FAIXA / INTERPRETAÇÃO'],hits.map(hz=>[
+        hz.toLocaleString('pt-BR',{maximumFractionDigits:2})+' Hz',
+        hz>1000000?'MHz/DNA — Alta especificidade bioquímica/molecular':hz>100000?'ETDF Alta — Alta especificidade por condição':hz>20000?'ETDF Baixa — Moderada especificidade sistêmica':'Rife Clássico — Correlação sistêmica ampla'
+      ]),[3500,5860],C_DARK),
+      sp(), new Paragraph({children:[new PageBreak()]})
+    );
+
+    // PROTOCOLO
+    children.push(
+      secH('6. PROTOCOLO DE TRATAMENTO SPOOKY2 — 21 DIAS'), sp(),
+      h('FASE 1 — Terreno / Detox (Dias 1–7)'),
+      mkTable(['ELEMENTO','CONFIGURAÇÃO'],[
+        ['Preset','Detox > Terrain Protocol (C) - JW'],
+        ['Modo','Remote Mode 24h (inclusive durante o sono)'],
+        ['Hidratação','2,5–3L de água por dia — essencial'],
+        ['Herxheimer','Normal nos dias 1–7. Aumentar água + pausar 1 dia se intenso.'],
+      ],[2800,6560],C_BLUE),
+      sp(), h('FASE 2 — Módulos por Sistema (Dias 8–18)'),
+      p('Tratar sistemas de maior resposta em sequência. Prioridade: nível ALTO.'),
+      sp(),
+      ...systems.filter(s=>s.level!=='LEVE'&&s.score>0).slice(0,5).flatMap((s,i)=>[
+        h(`Módulo ${String.fromCharCode(65+i)} — ${s.name} (${s.level})`,22),
+        mkTable(['ELEMENTO','CONFIGURAÇÃO'],[
+          ['Preset',`Heal > ${s.name.replace(/[🦠🧠🦴🫁❤️🫘🍽️👁️🩹🌸⚡🧹]/g,'').trim()} (C) - JW`],
+          ['Modo','Remote Mode 24h'],
+          ['Duração',i<3?'3 dias':'2 dias'],
+        ],[2600,6760],C_BLUE),
+        sp()
+      ]),
+      h('FASE 3 — Manutenção / Energia (Dias 19–21)'),
+      mkTable(['ELEMENTO','CONFIGURAÇÃO'],[
+        ['Preset','Boost > Energizing (C) - JW'],
+        ['Programas','Energizing program, Development of self-esteem, Balance'],
+        ['Próximo passo','Rescan após 30 dias para avaliar evolução'],
+      ],[2600,6760],C_BLUE),
+      sp(), new Paragraph({children:[new PageBreak()]})
+    );
+
+    // ORIENTAÇÕES
+    children.push(
+      secH('7. ORIENTAÇÕES GERAIS'), sp(),
+      mkTable(['ÁREA','ORIENTAÇÃO'],[
+        ['Remote Mode','Pode ficar ativo 24h, inclusive dormindo. Tubo próximo ao travesseiro.'],
+        ['Contact Mode','Sessões 2–3h. Pads no punho direito + tornozelo esquerdo. NUNCA acima dos ombros ou próximo ao coração. Não usar com marcapasso.'],
+        ['Herxheimer','Normal nos primeiros 3–7 dias. Aumentar água para 3L + reduzir sessão pela metade. Pausa de 1 dia se intenso.'],
+        ['Hidratação','2,5–3L de água por dia durante todo o protocolo.'],
+        ['Sono','7–9h/noite. Remote Mode é mais eficaz durante o sono.'],
+        ['Atividade física','Caminhada leve 20–30min/dia para drenagem linfática.'],
+        ['Diário de sintomas','Registrar diariamente: energia (1-10), sono, dores, humor. Essencial para o rescan.'],
+      ],[2200,7160],C_DARK),
+      sp(),sp(),
+      new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:160,after:80},children:[new TextRun({text:'Doctor Spooky — Análise de Biofeedback Vibracional Spooky2',size:18,color:C_BLUE,font:'Arial',italics:true})]}),
+      new Paragraph({alignment:AlignmentType.CENTER,spacing:{before:40,after:40},children:[new TextRun({text:`Responsável: Nanda Carvalho  |  ${today}`,size:18,color:C_DARK,font:'Arial'})]}),
+      sp(),
+      alertB('Este laudo é experimental e complementar. Não substitui diagnóstico médico convencional.')
+    );
+
+    const doc = new Document({
+      numbering:{config:[{reference:'bullets',levels:[{level:0,format:LevelFormat.BULLET,text:'•',alignment:AlignmentType.LEFT,style:{paragraph:{indent:{left:720,hanging:360}}}}]}]},
+      sections:[{properties:{page:{size:{width:12240,height:15840},margin:{top:1080,right:1080,bottom:1080,left:1080}}},children}]
+    });
+
+    const blob = await Packer.toBlob(doc);
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Laudo_${(patient.nome || 'Paciente').replace(/\s+/g, '_')}_DrSpooky.docx`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch(e) {
+    alert('Erro ao gerar o .docx: ' + e.message);
+    console.error(e);
+  } finally {
+    btn.textContent = '⬇ Baixar Laudo (.docx)';
+    btn.disabled = false;
+  }
+}
+
+// ─────────────────────────────────────────────
+//  RESTART
+// ─────────────────────────────────────────────
+function restart() {
+  document.getElementById('results').className = '';
+  document.getElementById('formSection').style.display = 'block';
+  fi.value = '';
+  document.getElementById('uploadOk').textContent = '';
+  ['sintCard','custCard'].forEach(id => document.getElementById(id).style.display = 'none');
+  document.getElementById('copyCard').style.display = 'none';
+  currentPreview = null;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+
+<!-- docx.js via CDN para geração do laudo no browser -->
+<script src="https://cdn.jsdelivr.net/npm/docx@9.6.1/build/index.umd.js"></script>
+
+</body>
+</html>
