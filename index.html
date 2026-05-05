@@ -186,6 +186,29 @@ textarea{resize:vertical;min-height:88px;line-height:1.55}
 .fa-tag.spk{background:#f0f4ff;border-color:#a0b4f0;color:#1e3a8a;font-family:monospace;font-size:11px}
 .fa-no-match{font-size:13px;color:#9c8f7a;font-style:italic;padding:2px 0 12px}
 
+/* Login */
+#loginScreen{position:fixed;inset:0;background:#f8f7f5;z-index:2000;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:#fff;border:0.5px solid #e0ddd8;border-radius:16px;padding:48px 40px;max-width:380px;width:100%;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.1)}
+.login-logo{font-size:36px;font-weight:600;color:#1a1a1a;letter-spacing:-1px;line-height:1;margin-bottom:6px}
+.login-logo span{color:#b8860b}
+.login-sub{font-size:13px;color:#9c8f7a;margin-bottom:36px;font-style:italic}
+.login-label{display:block;font-size:10px;font-weight:700;letter-spacing:.12em;color:#6b6258;text-transform:uppercase;margin-bottom:6px;text-align:left}
+.login-input{width:100%;padding:12px 14px;border:0.5px solid #d4cfc8;border-radius:8px;font-size:16px;font-family:inherit;outline:none;transition:all .2s;margin-bottom:16px;background:#fff;color:#1a1a1a}
+.login-input:focus{border-color:#b8860b;box-shadow:0 0 0 3px rgba(184,134,11,.1)}
+.login-btn{width:100%;padding:14px;background:#1a1a1a;border:none;border-radius:8px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s;font-family:inherit;letter-spacing:.04em}
+.login-btn:hover{background:#333}
+.login-err{background:#fff5f5;border:0.5px solid #fca5a5;border-radius:8px;padding:10px 14px;color:#b91c1c;font-size:13px;margin-bottom:14px;display:none;text-align:left}
+
+/* FAB Salvar */
+.fab-save{position:fixed;bottom:24px;right:24px;z-index:100;display:none;align-items:center;gap:8px;padding:14px 22px;background:#1a4a2e;border:none;border-radius:50px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.25);transition:all .2s;font-family:inherit;letter-spacing:.03em}
+.fab-save.visible{display:flex}
+.fab-save:hover{background:#15803d;transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,.3)}
+.fab-save.saved{background:#166534}
+
+/* Logout */
+.btn-logout{font-size:11px;padding:5px 12px;border:0.5px solid #d4cfc8;border-radius:6px;background:#fff;color:#9c8f7a;cursor:pointer;font-family:inherit;transition:all .2s;margin-left:8px}
+.btn-logout:hover{background:#f0ede8;color:#1a1a1a}
+
 /* Botão Pacientes no Header */
 .btn-patients{display:inline-flex;align-items:center;gap:6px;margin-top:14px;padding:8px 20px;background:#fff;border:0.5px solid #d4cfc8;border-radius:8px;color:#3a3530;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;font-family:inherit;letter-spacing:.04em}
 .btn-patients:hover{background:#f5f3f0;border-color:#9c8f7a}
@@ -235,6 +258,23 @@ textarea{resize:vertical;min-height:88px;line-height:1.55}
 <body>
 <div class="app">
 
+<!-- Tela de Login -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">Doctor <span>Spooky</span></div>
+    <div class="login-sub">Análise de Biofeedback Vibracional</div>
+    <label class="login-label" for="loginUser">E-mail</label>
+    <input class="login-input" id="loginUser" type="email" placeholder="seu@email.com" autocomplete="username">
+    <label class="login-label" for="loginPass">Senha</label>
+    <input class="login-input" id="loginPass" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="login-err" id="loginErr">E-mail ou senha incorretos.</div>
+    <button class="login-btn" onclick="doLogin()">Entrar</button>
+  </div>
+</div>
+
+<!-- Botão Flutuante Salvar -->
+<button class="fab-save" id="fabSave" onclick="saveCurrentPatient()">💾 &nbsp; Salvar Paciente</button>
+
 <!-- Modal Pacientes -->
 <div class="modal-overlay" id="patientsModal" onclick="if(event.target===this)closePatientsModal()">
   <div class="modal-panel">
@@ -264,7 +304,10 @@ textarea{resize:vertical;min-height:88px;line-height:1.55}
   <div class="eyebrow">Análise de Biofeedback Vibracional</div>
   <div class="logo">Doctor <span>Spooky</span></div>
   <div class="logo-sub">Reverse Lookup Decoder · Spooky2 GeneratorX</div>
-  <button class="btn-patients" onclick="openPatientsModal()">👥 &nbsp; Pacientes Salvos</button>
+  <div style="display:flex;justify-content:center;gap:8px;margin-top:14px">
+    <button class="btn-patients" style="margin-top:0" onclick="openPatientsModal()">👥 &nbsp; Pacientes Salvos</button>
+    <button class="btn-logout" onclick="doLogout()">Sair</button>
+  </div>
 </header>
 
 <!-- FORM -->
@@ -410,6 +453,44 @@ textarea{resize:vertical;min-height:88px;line-height:1.55}
 // ─────────────────────────────────────────────
 //  GLOBALS
 // ─────────────────────────────────────────────
+// ─────────────────────────────────────────────
+//  AUTENTICAÇÃO
+// ─────────────────────────────────────────────
+// Credenciais: altere os valores abaixo para mudar login/senha
+const AUTH_USERS = [
+  { email: 'nandagiachetta@gmail.com', pass: 'nanda2026' },
+  { email: 'admin', pass: 'spooky2026' },
+];
+
+function checkAuth() {
+  if (sessionStorage.getItem('ds_logged') === '1') {
+    document.getElementById('loginScreen').style.display = 'none';
+  }
+}
+
+function doLogin() {
+  const email = (document.getElementById('loginUser').value || '').trim().toLowerCase();
+  const pass  = document.getElementById('loginPass').value;
+  const err   = document.getElementById('loginErr');
+  const ok = AUTH_USERS.some(u => u.email.toLowerCase() === email && u.pass === pass);
+  if (ok) {
+    sessionStorage.setItem('ds_logged', '1');
+    document.getElementById('loginScreen').style.display = 'none';
+    err.style.display = 'none';
+  } else {
+    err.style.display = 'block';
+    document.getElementById('loginPass').value = '';
+    document.getElementById('loginPass').focus();
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('ds_logged');
+  location.reload();
+}
+
+checkAuth();
+
 const MSGS = ['Lendo frequências do scan...','Identificando programas por sistema...','Cruzando sintomas com achados...','Calculando gatilhos vibracionais...','Compilando laudo personalizado...'];
 let msgIdx = 0, msgInt, currentPreview = null;
 
@@ -780,13 +861,18 @@ function saveCurrentPatient() {
     };
     if (idx >= 0) { patients[idx] = profile; } else { patients.unshift(profile); }
     persistPatients(patients);
-    btn.innerHTML = '✓ &nbsp; Salvo com sucesso! Ver em "Pacientes Salvos"';
+    btn.innerHTML = '✓ &nbsp; Salvo! Ver em "Pacientes Salvos"';
     btn.classList.add('saved');
     btn.disabled = true;
+    const fab = document.getElementById('fabSave');
+    fab.innerHTML = '✓ &nbsp; Salvo!';
+    fab.classList.add('saved');
     setTimeout(() => {
       btn.innerHTML = '💾 &nbsp; Salvar Paciente + Laudo Completo';
       btn.classList.remove('saved');
       btn.disabled = false;
+      fab.innerHTML = '💾 &nbsp; Salvar Paciente';
+      fab.classList.remove('saved');
     }, 4000);
   } catch(e) {
     alert('Erro ao salvar: ' + e.message + '\n\nO armazenamento do navegador pode estar cheio. Tente excluir perfis antigos.');
@@ -1314,6 +1400,7 @@ function renderResults(prev) {
   }
 
   document.getElementById('results').className = 'on';
+  document.getElementById('fabSave').className = 'fab-save visible';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
@@ -1548,6 +1635,7 @@ async function gerarDocx() {
 // ─────────────────────────────────────────────
 function restart() {
   document.getElementById('results').className = '';
+  document.getElementById('fabSave').className = 'fab-save';
   document.getElementById('formSection').style.display = 'block';
   fi.value = '';
   document.getElementById('uploadOk').textContent = '';
