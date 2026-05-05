@@ -143,6 +143,27 @@ textarea{resize:vertical;min-height:88px;line-height:1.55}
 .btn-row{display:flex;justify-content:center;gap:12px;margin-top:12px;flex-wrap:wrap}
 .alert-strip{background:#fffbeb;border:0.5px solid #fcd34d;border-radius:8px;padding:12px 16px;font-size:13px;color:#92400e;line-height:1.6;margin-top:12px}
 
+/* Parasitas */
+.parasite-group{margin-bottom:20px}
+.parasite-cat{font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#9c8f7a;margin-bottom:8px;padding-bottom:6px;border-bottom:0.5px solid #f0ede8}
+.parasite-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:0.5px solid #f5f3f0}
+.parasite-item:last-child{border:none}
+.parasite-name{flex:1;font-size:14px;color:#1a1a1a;font-weight:500}
+.parasite-prog{font-size:12px;color:#9c8f7a;font-style:italic;margin-top:2px}
+.parasite-cnt{font-size:12px;font-weight:600;color:#7a1a1a;background:#fff0f0;border:0.5px solid #fca5a5;padding:2px 10px;border-radius:6px;flex-shrink:0}
+.parasite-empty{font-size:14px;color:#9c8f7a;font-style:italic;padding:8px 0}
+
+/* Diagnósticos */
+.diag-item{display:flex;align-items:flex-start;gap:14px;padding:12px 0;border-bottom:0.5px solid #f0ede8}
+.diag-item:last-child{border:none}
+.diag-badge{width:58px;flex-shrink:0;text-align:center;background:#fafaf8;border:0.5px solid #e0ddd8;border-radius:8px;padding:6px 4px}
+.diag-pct{display:block;font-size:20px;font-weight:700;line-height:1}
+.diag-lv{font-size:9px;color:#9c8f7a;text-transform:uppercase;letter-spacing:.08em}
+.diag-pct.alto{color:#dc2626}.diag-pct.moderado{color:#d97706}.diag-pct.leve{color:#16a34a}
+.diag-name{font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:3px}
+.diag-desc{font-size:13px;color:#6b6258}
+.diag-disclaimer{font-size:12px;color:#9c8f7a;font-style:italic;margin-top:14px;padding-top:12px;border-top:0.5px solid #f0ede8;line-height:1.6}
+
 @media(max-width:600px){.grid2,.grid3{grid-template-columns:1fr}.card{padding:20px 16px}.stats-row{margin-left:0;width:100%}}
 </style>
 </head>
@@ -258,6 +279,18 @@ textarea{resize:vertical;min-height:88px;line-height:1.55}
     <div class="cust-wrap" id="custWrap"></div>
   </div>
 
+  <!-- Parasitas & Patógenos -->
+  <div class="card" id="parasitasCard" style="display:none">
+    <div class="card-title">Parasitas &amp; Patógenos Detectados</div>
+    <div id="parasitasContent"></div>
+  </div>
+
+  <!-- Possibilidades de Diagnóstico -->
+  <div class="card" id="diagCard" style="display:none">
+    <div class="card-title">Possibilidades de Diagnóstico</div>
+    <div id="diagContent"></div>
+  </div>
+
   <!-- Download -->
   <div class="card" style="text-align:center">
     <div class="card-title" style="justify-content:center">Laudo Completo</div>
@@ -278,6 +311,115 @@ textarea{resize:vertical;min-height:88px;line-height:1.55}
 // ─────────────────────────────────────────────
 const MSGS = ['Lendo frequências do scan...','Identificando programas por sistema...','Cruzando sintomas com achados...','Calculando gatilhos vibracionais...','Compilando laudo personalizado...'];
 let msgIdx = 0, msgInt, currentPreview = null;
+
+// ─────────────────────────────────────────────
+//  PARASITAS & PATÓGENOS — base de detecção
+// ─────────────────────────────────────────────
+const PARASITE_DEFS = [
+  // Helmintas
+  {key:'Tapeworm',name:'Tênia / Solitária',cat:'Helminta'},
+  {key:'Taenia',name:'Tênia',cat:'Helminta'},
+  {key:'Roundworm',name:'Áscaris (Lombriga)',cat:'Helminta'},
+  {key:'Ascaris',name:'Áscaris',cat:'Helminta'},
+  {key:'Flukes',name:'Fascíola / Trematódeo',cat:'Helminta'},
+  {key:'Trematode',name:'Trematódeo',cat:'Helminta'},
+  {key:'Nematoda',name:'Nematódeo',cat:'Helminta'},
+  {key:'Trichinosis',name:'Triquinose',cat:'Helminta'},
+  {key:'Pinworm',name:'Oxiúros (Enterobius)',cat:'Helminta'},
+  {key:'Hookworm',name:'Ancilostomíase',cat:'Helminta'},
+  {key:'Toxocara',name:'Toxocaríase',cat:'Helminta'},
+  {key:'Schistosom',name:'Esquistossomose',cat:'Helminta'},
+  {key:'Strongyloid',name:'Estrongiloidíase',cat:'Helminta'},
+  {key:'Whipworm',name:'Tricocefalíase (Trichuris)',cat:'Helminta'},
+  // Protozoários
+  {key:'Toxoplasm',name:'Toxoplasmose',cat:'Protozoário'},
+  {key:'Babesia',name:'Babesiose',cat:'Protozoário'},
+  {key:'Giardia',name:'Giardíase',cat:'Protozoário'},
+  {key:'Amoeba',name:'Amebíase',cat:'Protozoário'},
+  {key:'Cryptospor',name:'Criptosporidiose',cat:'Protozoário'},
+  {key:'Cyclospora',name:'Ciclosporiase',cat:'Protozoário'},
+  {key:'Leishman',name:'Leishmaniose',cat:'Protozoário'},
+  {key:'Malaria',name:'Malária / Plasmodium',cat:'Protozoário'},
+  {key:'Blastocyst',name:'Blastocistose',cat:'Protozoário'},
+  // Fungos
+  {key:'Candida',name:'Candidíase Sistêmica',cat:'Fungo'},
+  {key:'Trichophyton',name:'Dermatofitose / Tinea',cat:'Fungo'},
+  {key:'Aspergill',name:'Aspergilose',cat:'Fungo'},
+  {key:'Onychomycosis',name:'Onicomicose',cat:'Fungo'},
+  {key:'Fusarium',name:'Fusariose',cat:'Fungo'},
+  // Bactérias
+  {key:'Helicobacter',name:'H. pylori',cat:'Bactéria'},
+  {key:'Borrelia',name:'Doença de Lyme (Borrelia)',cat:'Bactéria'},
+  {key:'Bartonella',name:'Bartonella',cat:'Bactéria'},
+  {key:'Ehrlich',name:'Ehrlichiose',cat:'Bactéria'},
+  {key:'Streptoc',name:'Estreptococo',cat:'Bactéria'},
+  {key:'Staphyloc',name:'Estafilococo',cat:'Bactéria'},
+  {key:'Klebsiella',name:'Klebsiella',cat:'Bactéria'},
+  {key:'Chlamyd',name:'Clamídia',cat:'Bactéria'},
+  {key:'Mycoplasm',name:'Mycoplasma',cat:'Bactéria'},
+  {key:'Actinomyc',name:'Actinomicose',cat:'Bactéria'},
+  {key:'Tularemia',name:'Tularemia',cat:'Bactéria'},
+  // Vírus
+  {key:'Herpes',name:'Vírus Herpes (HSV)',cat:'Vírus'},
+  {key:'Epstein',name:'Epstein-Barr (EBV)',cat:'Vírus'},
+  {key:'Cytomegal',name:'Citomegalovírus (CMV)',cat:'Vírus'},
+  {key:'Influenza',name:'Influenza',cat:'Vírus'},
+  {key:'Coronavirus',name:'Coronavírus',cat:'Vírus'},
+  {key:'Papillom',name:'HPV / Papilomavírus',cat:'Vírus'},
+];
+
+function detectParasites(pc) {
+  const found = [], seen = new Set();
+  Object.entries(pc).forEach(([prog, count]) => {
+    const pl = prog.toLowerCase();
+    PARASITE_DEFS.forEach(def => {
+      if (seen.has(def.key)) return;
+      if (pl.includes(def.key.toLowerCase())) {
+        found.push({ ...def, prog, count });
+        seen.add(def.key);
+      }
+    });
+  });
+  found.sort((a, b) => b.count - a.count);
+  const grouped = {};
+  found.forEach(f => { if (!grouped[f.cat]) grouped[f.cat] = []; grouped[f.cat].push(f); });
+  return { found, grouped };
+}
+
+// ─────────────────────────────────────────────
+//  POSSIBILIDADES DE DIAGNÓSTICO
+// ─────────────────────────────────────────────
+const DIAG_MAP = [
+  {name:'Síndrome de Fadiga Crônica (SFC/EM)',desc:'Exaustão sistêmica persistente com comprometimento imunológico e neurológico',reqs:[{id:'energia',min:150},{id:'neurologico',min:100}]},
+  {name:'Fibromialgia',desc:'Dor musculoesquelética difusa com sensibilização central e fadiga',reqs:[{id:'musculo',min:200},{id:'neurologico',min:150}]},
+  {name:'Disbiose Intestinal / SIBO',desc:'Desequilíbrio da microbiota com supercrescimento bacteriano intestinal',reqs:[{id:'digestivo',min:200}]},
+  {name:'Candidíase Sistêmica',desc:'Proliferação fúngica sistêmica com comprometimento digestivo e imunológico',reqs:[{id:'infeccioso',min:150},{id:'digestivo',min:100}]},
+  {name:'Infestação Parasitária Intestinal',desc:'Presença de helmintas ou protozoários com sobrecarga do sistema detox',reqs:[{id:'detox',min:200}]},
+  {name:'Ansiedade / Estresse Crônico',desc:'Desregulação do eixo HPA com impacto no sistema nervoso autônomo',reqs:[{id:'neurologico',min:200}]},
+  {name:'Doença de Lyme / Borreliose Crônica',desc:'Infecção multissistêmica por espiroqueta com possíveis coinfecções',reqs:[{id:'infeccioso',min:300},{id:'musculo',min:100}]},
+  {name:'Síndrome Metabólica',desc:'Desregulação metabólica com risco cardiovascular elevado',reqs:[{id:'cardiovascular',min:150},{id:'digestivo',min:100}]},
+  {name:'Disfunção Hormonal / Endócrina',desc:'Desequilíbrio hormonal sistêmico com comprometimento do ciclo feminino',reqs:[{id:'reprodutivo',min:150}]},
+  {name:'Intoxicação por Metais Pesados',desc:'Acúmulo de toxinas metálicas com comprometimento neurológico e hepático',reqs:[{id:'detox',min:300}]},
+  {name:'Infecção Viral Reativada (EBV/CMV/Herpes)',desc:'Reativação viral crônica com fadiga persistente e imunodepressão',reqs:[{id:'infeccioso',min:200},{id:'energia',min:100}]},
+  {name:'Disfunção Cardiovascular / Hipertensão',desc:'Comprometimento do sistema cardiovascular com risco vascular',reqs:[{id:'cardiovascular',min:200}]},
+  {name:'Síndrome do Intestino Permeável (Leaky Gut)',desc:'Aumento da permeabilidade intestinal com inflamação sistêmica',reqs:[{id:'digestivo',min:150},{id:'infeccioso',min:100}]},
+  {name:'Infecções Respiratórias Recorrentes',desc:'Predisposição a infecções no trato respiratório superior e inferior',reqs:[{id:'respiratorio',min:150}]},
+  {name:'Comprometimento Renal / Urinário',desc:'Disfunção renal ou infecções recorrentes do trato urinário',reqs:[{id:'renal',min:150}]},
+];
+
+function buildDiagnoses(systems) {
+  const sc = id => (systems.find(s => s.id === id) || {}).score || 0;
+  const results = [];
+  DIAG_MAP.forEach(diag => {
+    const scores = diag.reqs.map(r => Math.min(sc(r.id) / r.min, 1));
+    const conf = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 100);
+    if (conf >= 50) {
+      const level = conf >= 80 ? 'alto' : conf >= 60 ? 'moderado' : 'leve';
+      results.push({ ...diag, conf, level });
+    }
+  });
+  return results.sort((a, b) => b.conf - a.conf).slice(0, 10);
+}
 
 // ─────────────────────────────────────────────
 //  IMC
@@ -383,7 +525,8 @@ function extractData(content) {
   lines.forEach(l => { if (l.includes('(CUST)')) { const n = l.replace(/\s*\(CUST\).*/, '').trim(); if (n) custSet.add(n); } });
   const systems = analyzeSystems(pc);
   const totalMentions = Object.values(pc).reduce((a, b) => a + b, 0);
-  return { meta, hits, top10: top.slice(0, 10), topAll: top, custPrograms: [...custSet], systems, totalMentions, uniquePrograms: Object.keys(pc).length };
+  const parasites = detectParasites(pc);
+  return { meta, hits, top10: top.slice(0, 10), topAll: top, custPrograms: [...custSet], systems, totalMentions, uniquePrograms: Object.keys(pc).length, parasites };
 }
 
 // ─────────────────────────────────────────────
@@ -520,7 +663,8 @@ function buildRec(systems) {
 //  RENDER
 // ─────────────────────────────────────────────
 function renderResults(prev) {
-  const { patient, systems, top10, custPrograms, hits, recomendacoes } = prev;
+  const { patient, systems, top10, custPrograms, hits, recomendacoes, parasites } = prev;
+  const diagnoses = buildDiagnoses(systems);
 
   // Patient header
   const age = patient.age ? patient.age + ' anos' : '';
@@ -614,6 +758,45 @@ function renderResults(prev) {
     document.getElementById('custWrap').innerHTML = custPrograms.map(c => `<span class="cpill">${c}</span>`).join('');
   }
 
+  // Parasitas & Patógenos
+  document.getElementById('parasitasCard').style.display = 'block';
+  if (parasites.found.length > 0) {
+    const catOrder = ['Helminta','Protozoário','Fungo','Bactéria','Vírus'];
+    const cats = catOrder.filter(c => parasites.grouped[c]);
+    document.getElementById('parasitasContent').innerHTML = cats.map(cat => `
+      <div class="parasite-group">
+        <div class="parasite-cat">${cat === 'Helminta' ? '🪱 Helmintas / Vermes' : cat === 'Protozoário' ? '🔬 Protozoários' : cat === 'Fungo' ? '🍄 Fungos' : cat === 'Bactéria' ? '🦠 Bactérias' : '🧬 Vírus'}</div>
+        ${parasites.grouped[cat].map(p => `
+          <div class="parasite-item">
+            <div style="flex:1">
+              <div class="parasite-name">${p.name}</div>
+              <div class="parasite-prog">${p.prog}</div>
+            </div>
+            <span class="parasite-cnt">${p.count}×</span>
+          </div>`).join('')}
+      </div>`).join('');
+  } else {
+    document.getElementById('parasitasContent').innerHTML = '<div class="parasite-empty">Nenhum patógeno específico identificado nos programas do scan.</div>';
+  }
+
+  // Possibilidades de Diagnóstico
+  if (diagnoses.length > 0) {
+    document.getElementById('diagCard').style.display = 'block';
+    document.getElementById('diagContent').innerHTML =
+      diagnoses.map(d => `
+        <div class="diag-item">
+          <div class="diag-badge">
+            <span class="diag-pct ${d.level}">${d.conf}%</span>
+            <span class="diag-lv">${d.level.toUpperCase()}</span>
+          </div>
+          <div>
+            <div class="diag-name">${d.name}</div>
+            <div class="diag-desc">${d.desc}</div>
+          </div>
+        </div>`).join('') +
+      '<div class="diag-disclaimer">⚠️ Estas possibilidades são baseadas exclusivamente nos padrões de frequência do scan Spooky2 e têm caráter experimental. Não constituem diagnóstico médico. Sempre consulte um profissional de saúde habilitado.</div>';
+  }
+
   document.getElementById('results').className = 'on';
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -647,7 +830,7 @@ async function gerarDocx() {
   btn.disabled = true;
   try {
     const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-            AlignmentType, BorderStyle, WidthType, ShadingType, VerticalAlign, PageBreak, LevelFormat } = docx;
+            AlignmentType, BorderStyle, WidthType, ShadingType, VerticalAlign, PageBreak } = docx;
 
     const prev = currentPreview;
     const { patient, systems, top10, hits, custPrograms, recomendacoes } = prev;
@@ -801,7 +984,6 @@ async function gerarDocx() {
     );
 
     const doc = new Document({
-      numbering:{config:[{reference:'bullets',levels:[{level:0,format:LevelFormat.BULLET,text:'•',alignment:AlignmentType.LEFT,style:{paragraph:{indent:{left:720,hanging:360}}}}]}]},
       sections:[{properties:{page:{size:{width:12240,height:15840},margin:{top:1080,right:1080,bottom:1080,left:1080}}},children}]
     });
 
@@ -829,7 +1011,7 @@ function restart() {
   document.getElementById('formSection').style.display = 'block';
   fi.value = '';
   document.getElementById('uploadOk').textContent = '';
-  ['sintCard','custCard'].forEach(id => document.getElementById(id).style.display = 'none');
+  ['sintCard','custCard','parasitasCard','diagCard'].forEach(id => document.getElementById(id).style.display = 'none');
   document.getElementById('copyCard').style.display = 'none';
   currentPreview = null;
   window.scrollTo({ top: 0, behavior: 'smooth' });
