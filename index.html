@@ -164,6 +164,28 @@ textarea{resize:vertical;min-height:88px;line-height:1.55}
 .diag-desc{font-size:13px;color:#6b6258}
 .diag-disclaimer{font-size:12px;color:#9c8f7a;font-style:italic;margin-top:14px;padding-top:12px;border-top:0.5px solid #f0ede8;line-height:1.6}
 
+/* Análise por Frequência */
+.freq-analysis{border-top:0.5px solid #f0ede8}
+.freq-analysis:first-child{border-top:none}
+.fa-header{display:flex;align-items:center;gap:12px;padding:14px 0;cursor:pointer;user-select:none}
+.fa-header:hover .fa-name{color:#b8860b}
+.fa-rank{font-size:12px;color:#9c8f7a;width:24px;flex-shrink:0;text-align:right;font-weight:600}
+.fa-name{flex:1;font-size:14px;font-weight:600;color:#1a1a1a;transition:color .2s}
+.fa-cnt{font-size:12px;font-weight:600;color:#7a5e0a;background:#fdf3d0;border:0.5px solid #e8dfc0;padding:2px 10px;border-radius:6px;flex-shrink:0}
+.fa-toggle{font-size:10px;color:#9c8f7a;flex-shrink:0;width:14px;transition:transform .2s}
+.fa-toggle.open{transform:rotate(180deg)}
+.fa-body{display:none;padding:0 0 18px 36px}
+.fa-body.open{display:block}
+.fa-section{margin-bottom:14px}
+.fa-section-title{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#b8860b;margin-bottom:7px}
+.fa-rel{font-size:13px;color:#3a3530;line-height:1.65;background:#fafaf8;border-radius:7px;padding:9px 13px;border:0.5px solid #e8e4df}
+.fa-tags{display:flex;flex-wrap:wrap;gap:5px}
+.fa-tag{display:inline-block;font-size:12px;padding:4px 10px;border-radius:6px;border:0.5px solid;line-height:1.4}
+.fa-tag.sint{background:#fff5f0;border-color:#fbd5c0;color:#9a3412}
+.fa-tag.trat{background:#f0faf4;border-color:#a7d7b8;color:#166534}
+.fa-tag.spk{background:#f0f4ff;border-color:#a0b4f0;color:#1e3a8a;font-family:monospace;font-size:11px}
+.fa-no-match{font-size:13px;color:#9c8f7a;font-style:italic;padding:2px 0 12px}
+
 @media(max-width:600px){.grid2,.grid3{grid-template-columns:1fr}.card{padding:20px 16px}.stats-row{margin-left:0;width:100%}}
 </style>
 </head>
@@ -258,6 +280,12 @@ textarea{resize:vertical;min-height:88px;line-height:1.55}
   <div class="card">
     <div class="card-title">Top 10 Programas — Maior Frequência</div>
     <div id="progList"></div>
+  </div>
+
+  <!-- Análise por Frequência -->
+  <div class="card" id="topAnalysisCard" style="display:none">
+    <div class="card-title">Análise das Frequências com Maior Repetição</div>
+    <div id="topAnalysisContent"></div>
   </div>
 
   <!-- Sintomas -->
@@ -406,6 +434,217 @@ const DIAG_MAP = [
   {name:'Infecções Respiratórias Recorrentes',desc:'Predisposição a infecções no trato respiratório superior e inferior',reqs:[{id:'respiratorio',min:150}]},
   {name:'Comprometimento Renal / Urinário',desc:'Disfunção renal ou infecções recorrentes do trato urinário',reqs:[{id:'renal',min:150}]},
 ];
+
+// ─────────────────────────────────────────────
+//  BANCO DE ANÁLISE POR PROGRAMA
+// ─────────────────────────────────────────────
+const PROGRAM_ANALYSIS = [
+  { keywords:['Stress','Tension','Anxiety','Nervos','Overcoming','Nervousness'], name:'Estresse / Ansiedade Crônica', sistema:'🧠 Neurológico / Emocional',
+    relacionado:'Ativação crônica do eixo HPA com elevação de cortisol e desregulação do sistema nervoso autônomo — resposta de "luta ou fuga" permanentemente ativa.',
+    sintomas:['Tensão muscular persistente','Insônia ou sono não reparador','Fadiga mental e brain fog','Irritabilidade','Palpitações','Dores de cabeça tensionais','Digestão alterada','Sensação de esgotamento'],
+    suplementos:['Ashwagandha KSM-66 — 300–600mg/dia','Magnésio L-Treonato — 144mg Mg/dia','5-HTP — 100mg à noite','L-Teanina — 200mg (manhã + tarde)','Vitamina B Complex — 1 cáps/dia'],
+    chas:['Melissa (erva-cidreira) — 2x/dia','Camomila — à noite','Maracujá — à tarde'],
+    spooky:['Stress (C) - JW','Anxiety and Stress (ETDFL)','Relaxation and Calmness (C) - JW','Adrenal Support (C) - JW','Emotional Wellbeing (C) - JW'] },
+
+  { keywords:['Depression','Depress','Bipolar','Mood','Sadness','Melancholy'], name:'Depressão / Disfunção de Humor', sistema:'🧠 Neurológico / Emocional',
+    relacionado:'Desequilíbrio de neurotransmissores (serotonina, dopamina, norepinefrina) com inflamação neurológica crônica e atrofia hipocampal.',
+    sintomas:['Tristeza persistente','Apatia e anedonia','Fadiga profunda','Alterações do sono','Dificuldade de concentração','Isolamento social','Pensamentos negativos recorrentes'],
+    suplementos:['5-HTP — 150–300mg/dia','Ômega-3 EPA+DHA — 2.000–3.000mg/dia','Vitamina D3 — 5.000 UI/dia','SAMe — 400mg/dia','Magnésio Glicinato — 400mg/noite'],
+    chas:['Camomila — à noite','Melissa — 2x/dia','Chá-de-são-joão — 1x/dia (sem antidepressivos)'],
+    spooky:['Depression (ETDFL)','Mood Enhancement (C) - JW','Neurotransmitter Support (C) - JW','Serotonin Reuptake (CAFL)'] },
+
+  { keywords:['Insomnia','Sleep','Delta','Theta','Alpha'], name:'Insônia / Distúrbios do Sono', sistema:'🧠 Neurológico / Emocional',
+    relacionado:'Desregulação do ritmo circadiano com deficiência de melatonina e ativação excessiva do sistema nervoso simpático, impedindo a recuperação noturna.',
+    sintomas:['Dificuldade de adormecer','Acordar múltiplas vezes','Sono não reparador','Sonolência diurna','Fadiga crônica','Irritabilidade','Comprometimento cognitivo'],
+    suplementos:['Melatonina — 0,5–3mg 30min antes de dormir','Magnésio Glicinato — 400mg à noite','5-HTP — 100–200mg à noite','L-Teanina — 200mg à noite','GABA — 500mg à noite'],
+    chas:['Camomila + mel — 30min antes de dormir','Valeriana — à noite','Maracujá — à noite','Melissa — à noite'],
+    spooky:['Insomnia (C) - JW','Sleep Aid (ETDFL)','Melatonin Production (C) - JW','Delta Sleep Induction (C) - JW'] },
+
+  { keywords:['Migraine','Headache','Cephalgia','Cluster','Hemicrania'], name:'Enxaqueca / Cefaleia Crônica', sistema:'🧠 Neurológico / Emocional',
+    relacionado:'Disfunção neurovascular com sensibilização central e vasodilatação cerebral anormal, frequentemente desencadeada por hormônios, alimentos ou estresse.',
+    sintomas:['Dor pulsátil (geralmente unilateral)','Náuseas e vômitos','Sensibilidade extrema à luz e sons','Aura visual','Rigidez cervical','Piora com esforço físico'],
+    suplementos:['Magnésio Glicinato — 600mg/dia (preventivo)','Vitamina B2 (Riboflavina) — 400mg/dia','CoQ10 — 300mg/dia','Petasita (Butterbur) — 150mg/dia','Melatonina — 3mg/noite'],
+    chas:['Gengibre — ao primeiro sinal','Hortelã-pimenta nas têmporas (inalação)','Camomila — 3x/dia','Compressa fria na testa + quente na nuca'],
+    spooky:['Migraine (C) - JW','Headache (ETDFL)','Neuralgia (CAFL)','Pain Relief (C) - JW','Vascular Regulation (C) - JW'] },
+
+  { keywords:['Lyme','Borrelia','Borellia','Borrellia'], name:'Doença de Lyme / Borreliose', sistema:'🦠 Infeccioso / Imunológico',
+    relacionado:'Infecção por Borrelia burgdorferi (espiroqueta) transmitida por carrapatos — forma biofilmes e afeta múltiplos sistemas simultaneamente com capacidade de evasão imune.',
+    sintomas:['Fadiga extrema e incapacitante','Dores articulares migratórias','Névoa mental intensa','Dores musculares difusas','Distúrbios neurológicos','Palpitações','Dormência e formigamento','Sensibilidade à luz e sons'],
+    suplementos:['NAC — 600mg 2x/dia (quebra biofilmes)','Glutationa reduzida — 500mg/dia','Própolis extrato — 500mg/dia','Magnésio Malato — 400mg/dia','Ômega-3 — 2.000mg/dia','Vitamina D3+K2 — 5.000 UI/dia'],
+    chas:['Chá de orégano — 2x/dia','Chá de neem — 1x/dia','Gengibre com limão — 2x/dia'],
+    spooky:['Lyme Disease 1 (C) - JW','Lyme Disease 2 (C) - JW','Borrelia Burgdorferi (CAFL)','Biofilm Buster (C) - JW','Detox Maintenance (C) - JW','Terrain Protocol (C) - JW'] },
+
+  { keywords:['Candida','Thrush','Yeast','Fungal','Monilia','Candidiasis'], name:'Candidíase / Infecção Fúngica', sistema:'🦠 Infeccioso / Imunológico',
+    relacionado:'Proliferação excessiva de Candida albicans — fungo oportunista que penetra a mucosa intestinal, libera toxinas e causa reação inflamatória sistêmica.',
+    sintomas:['Fadiga crônica e brain fog','Distensão abdominal e gases','Desejo intenso de açúcar','Infecções recorrentes (vaginal, oral, unhas)','Alterações intestinais','Pele com manchas ou coceira','Dores de cabeça recorrentes'],
+    suplementos:['Extrato de orégano (carvacrol 65%+) — 200mg 2x/dia','Ácido caprílico — 1.000mg 2x/dia','Berberina — 500mg 2x/dia','Probiótico — 50 bilhões UFC/dia','Biotina — 5.000mcg/dia (inibe forma invasora)'],
+    chas:['Chá de cravo-da-índia — 2x/dia','Chá de canela — 2x/dia','Própolis spray — manhã e noite'],
+    spooky:['Candida Albicans (CAFL)','Candida (C) - JW','Antifungal General (C) - JW','Intestinal Dysbiosis (C) - JW'] },
+
+  { keywords:['Herpes','HSV','Cold Sore','Shingles','Varicella','Zoster'], name:'Herpes Simplex / Zoster', sistema:'🦠 Infeccioso / Imunológico',
+    relacionado:'Vírus latente do grupo herpesviridae que se reativa em momentos de estresse ou imunodepressão, viajando pelos nervos até a pele.',
+    sintomas:['Lesões labiais ou genitais recorrentes','Dor neuropática localizada','Queimação e coceira','Fadiga durante surtos','Gânglios aumentados','Sensibilidade na região afetada'],
+    suplementos:['L-Lisina — 1.000–3.000mg/dia durante surto','Vitamina C — 3.000mg/dia','Zinco quelado — 30mg/dia','Própolis extrato — 500mg/dia','Monolaurina — 900mg/dia'],
+    chas:['Melissa (antiviral) — 3x/dia durante surto','Equinácea — 2x/dia','Aloe vera (compressa) — local'],
+    spooky:['Herpes Simplex 1 (CAFL)','Herpes Simplex 2 (CAFL)','Herpes General (C) - JW','Antiviral (C) - JW','Immune System (C) - JW'] },
+
+  { keywords:['Epstein','EBV','Mononucleosis','Cytomegal','CMV','Mono'], name:'Epstein-Barr / CMV Reativado', sistema:'🦠 Infeccioso / Imunológico',
+    relacionado:'Reativação do vírus EBV ou CMV em estado latente — frequentemente desencadeada por estresse crônico, causando exaustão imunológica persistente.',
+    sintomas:['Fadiga profunda e persistente','Gânglios aumentados','Dores de garganta recorrentes','Febre baixa crônica','Dores musculares e articulares','Dificuldade de recuperação após esforço'],
+    suplementos:['Monolaurina — 1.200mg/dia','Vitamina D3 — 10.000 UI/dia (fase ativa)','Vitamina C lipossomal — 4.000mg/dia','Zinco — 30mg/dia','Beta-glucana — 500mg/dia','NAC — 600mg/dia'],
+    chas:['Própolis — 2x/dia','Sabugueiro (Elderberry) — 2x/dia','Astragalus — 1x/dia'],
+    spooky:['Epstein Barr Virus (CAFL)','EBV Reactivation (C) - JW','Mononucleosis (ETDFL)','Antiviral (C) - JW','Lymphatic Drain (C) - JW'] },
+
+  { keywords:['Bacteria','Infection','Streptoc','Staphyloc','Klebsiella','Pneumonia','Bacillinum','Helicobacter'], name:'Infecção Bacteriana', sistema:'🦠 Infeccioso / Imunológico',
+    relacionado:'Colonização ou infecção ativa por bactérias patogênicas, podendo ser aguda ou crônica com formação de biofilmes resistentes a antibióticos convencionais.',
+    sintomas:['Febre e calafrios','Inflamação localizada ou sistêmica','Fadiga e mal-estar geral','Dores musculares','Alterações digestivas','Resposta imunológica exacerbada'],
+    suplementos:['Própolis extrato seco — 500mg/dia','Alho fermentado — 2 cápsulas/dia','Berberina — 500mg 3x/dia','NAC — 600mg 2x/dia (biofilmes)','Probiótico pós-tratamento — 50 bilhões UFC/dia'],
+    chas:['Chá de orégano — 2x/dia','Chá de tomilho — 2x/dia','Chá de alecrim — 1x/dia'],
+    spooky:['Bacteria General (C) - JW','Antibiotic Alternative (C) - JW','Biofilm Buster (C) - JW','Immune Boost (C) - JW'] },
+
+  { keywords:['Arthritis','Rheumatoid','Osteoarthritis','Osteo','Joint','Spondyl','Gout','Bursitis'], name:'Artrite / Artrose / Reumatismo', sistema:'🦴 Musculoesquelético',
+    relacionado:'Inflamação crônica das articulações com degeneração da cartilagem (artrose) ou processo autoimune com sinovite (artrite reumatoide).',
+    sintomas:['Dor e rigidez articular (pior pela manhã)','Inchaço e calor nas articulações','Limitação de movimento','Crepitação (estalos)','Deformidade articular progressiva','Fadiga inflamatória'],
+    suplementos:['Colágeno Tipo II não desnaturado — 40mg/dia','Cúrcuma + Piperina — 1.000mg/dia','MSM — 2.000–3.000mg/dia','Boswellia serrata — 600mg/dia','Ômega-3 — 3.000mg EPA+DHA/dia','Glucosamina + Condroitina'],
+    chas:['Cúrcuma + gengibre — 3x/dia','Cavalinha — 2x/dia','Compressa de arnica — local'],
+    spooky:['Arthritis (C) - JW','Rheumatoid Arthritis (ETDFL)','Joint Inflammation (C) - JW','Pain Relief (C) - JW','Anti-inflammatory (C) - JW'] },
+
+  { keywords:['Fibromyalgia','Fibromialgia','Myositis','Myalgia','Tender Point'], name:'Fibromialgia / Dor Muscular Crônica', sistema:'🦴 Musculoesquelético',
+    relacionado:'Síndrome de sensibilização central com dor muscular difusa e pontos dolorosos, associada a distúrbios do sono, fadiga e disfunção cognitiva.',
+    sintomas:['Dor muscular difusa e generalizada','Pontos de sensibilidade (tender points)','Fadiga extrema','Sono não reparador','Fibronebulosa (brain fog)','Sensibilidade ao toque','Síndrome do intestino irritável associada'],
+    suplementos:['Magnésio Malato — 800mg/dia (fundamental)','Vitamina D3 — 5.000 UI/dia','5-HTP — 100mg 3x/dia','Ômega-3 — 3.000mg/dia','CoQ10 — 200mg/dia','NADH — 10mg/dia'],
+    chas:['Cúrcuma + pimenta preta — 3x/dia','Lavanda (banho aromático) — noite','Camomila — antes de dormir'],
+    spooky:['Fibromyalgia (C) - JW','Fibromyalgia (ETDFL)','Pain Relief General (C) - JW','Muscle Relaxation (C) - JW','Sleep Support (C) - JW'] },
+
+  { keywords:['Lumbago','Backache','Lumbar','Sciatica','Disc','Herniation','Spinal'], name:'Lombalgia / Ciática / Hérnia de Disco', sistema:'🦴 Musculoesquelético',
+    relacionado:'Processo inflamatório e/ou degenerativo da coluna lombar — pode envolver hérnia de disco comprimindo raízes nervosas, causando dor irradiada.',
+    sintomas:['Dor lombar crônica ou aguda','Irradiação para glúteos e pernas (ciática)','Rigidez matinal','Limitação de movimento','Espasmos musculares','Formigamento ou dormência nas pernas'],
+    suplementos:['Magnésio Glicinato — 400mg/noite','Cúrcuma + Piperina — 1.000mg/dia','Colágeno Tipo II — 10g/dia','Vitamina D3 — 5.000 UI/dia','MSM — 2.000mg/dia'],
+    chas:['Cúrcuma e gengibre — 3x/dia','Compressa quente de arnica — local','Salgueiro branco — 2x/dia (salicina natural)'],
+    spooky:['Backache (CAFL)','Lumbago (ETDFL)','Sciatica (ETDFL)','Pain Relief (C) - JW','Spine and Disc (C) - JW'] },
+
+  { keywords:['Sinusitis','Sinus','Rhinitis','Nasal','Rhinosinusitis','Polyp'], name:'Sinusite / Rinite Crônica', sistema:'🫁 Respiratório',
+    relacionado:'Inflamação crônica das cavidades paranasais — pode ser infecciosa (bacteriana/fúngica) ou alérgica, com acúmulo de muco e obstrução das vias aéreas superiores.',
+    sintomas:['Congestão nasal persistente','Dor de cabeça frontal e na face','Secreção nasal espessa','Gotejamento pós-nasal','Redução do olfato e paladar','Tosse crônica noturna','Fadiga associada'],
+    suplementos:['NAC — 600mg 2x/dia (fluidifica o muco)','Quercetina — 500mg 2x/dia','Vitamina C — 2.000mg/dia','Zinco — 30mg/dia','Vitamina D3 — 5.000 UI/dia'],
+    chas:['Inalação de eucalipto + hortelã — 2x/dia','Gengibre, mel e limão — 3x/dia','Guaco — 2x/dia','Lavagem nasal com soro — 2x/dia'],
+    spooky:['Sinusitis (C) - JW','Sinusitis (ETDFL)','Rhinitis (ETDFL)','Nasal Polyps (CAFL)','Anti-inflammatory (C) - JW'] },
+
+  { keywords:['Asthma','Bronchitis','Bronchial','Emphysema','COPD','Cough','Whooping','Pertussis','Laryngitis'], name:'Asma / Bronquite / Comprometimento Respiratório', sistema:'🫁 Respiratório',
+    relacionado:'Inflamação e hiperreatividade das vias aéreas com broncoespasmo, aumento de muco e obstrução ao fluxo aéreo.',
+    sintomas:['Chiado no peito (sibilância)','Falta de ar e aperto no peito','Tosse persistente noturna','Expectoração','Intolerância a exercício','Crises com alérgenos ou frio'],
+    suplementos:['Magnésio — 400mg/dia (broncodilatação natural)','Vitamina D3 — 5.000 UI/dia','Ômega-3 — 2.000mg/dia','Quercetina — 1.000mg/dia','NAC — 600mg/dia'],
+    chas:['Guaco — 3x/dia','Inalação de eucalipto — 2x/dia','Própolis — 2x/dia','Gengibre e mel — 3x/dia'],
+    spooky:['Asthma (C) - JW','Bronchitis (ETDFL)','Respiratory (C) - JW','Lung Support (C) - JW','Anti-inflammatory (C) - JW'] },
+
+  { keywords:['Hypertension','High Blood Pressure','Cardiac','Angina','Arrhythmia','Pericarditis','Arteriosclerosis','Atherosclerosis'], name:'Hipertensão / Disfunção Cardiovascular', sistema:'❤️ Cardiovascular',
+    relacionado:'Elevação crônica da pressão arterial com aumento da resistência vascular periférica, sobrecarregando o coração — principal fator de risco para AVC e infarto.',
+    sintomas:['Pressão arterial elevada','Dores de cabeça na nuca','Zumbido nos ouvidos','Visão turva','Falta de ar ao esforço','Palpitações','Inchaço nos tornozelos'],
+    suplementos:['CoQ10 — 200–400mg/dia','Magnésio Taurato — 400mg/dia','Ômega-3 — 3.000mg EPA+DHA/dia','Vitamina D3 — 5.000 UI/dia','Berberina — 500mg 2x/dia (não substituir medicação)'],
+    chas:['Hibisco — 2–3x/dia (reduz pressão)','Suco de beterraba — copo/dia','Chá verde — 2x/dia'],
+    spooky:['Hypertension (C) - JW','Hypertension (ETDFL)','Cardiac Support (C) - JW','Circulation (C) - JW','Arteriosclerosis (CAFL)'] },
+
+  { keywords:['Gastritis','Gastric','Stomach','Ulcer','Dyspepsia','Peracidity','Acid Reflux','Esophagitis'], name:'Gastrite / Refluxo / Úlcera', sistema:'🍽️ Digestivo / Hepático',
+    relacionado:'Inflamação da mucosa gástrica causada por H. pylori, anti-inflamatórios, estresse ou dieta inadequada — pode evoluir para úlcera péptica.',
+    sintomas:['Dor ou queimação epigástrica','Azia e refluxo','Náuseas em jejum','Distensão abdominal','Arrotos frequentes','Intolerância a ácidos e gorduras','Mau hálito'],
+    suplementos:['L-Glutamina — 5–10g/dia em jejum','Aloe vera — 100mL em jejum','DGL (regaliz) — 380mg antes das refeições','Zinco Carnosina — 75mg 2x/dia','Probiótico — 20 bilhões UFC/dia'],
+    chas:['Camomila — antes das refeições','Água morna com bicarbonato — em jejum','Gengibre — antes das refeições','Alcaçuz DGL — 2x/dia'],
+    spooky:['Gastritis (C) - JW','Gastritis (ETDFL)','H Pylori (CAFL)','Acid Reflux (C) - JW','Stomach Support (C) - JW'] },
+
+  { keywords:['Colitis','Crohn','Diverticulitis','IBD','Bowel','Disbacteriosis'], name:'Colite / Disbiose / DII', sistema:'🍽️ Digestivo / Hepático',
+    relacionado:'Inflamação crônica intestinal com desequilíbrio da microbiota — pode ter componente autoimune (doença de Crohn / retocolite) ou simplesmente disbiose grave.',
+    sintomas:['Dor abdominal em cólica','Diarreia com ou sem sangue','Urgência para evacuar','Distensão e gases','Fadiga por má absorção','Perda de peso','Febre nos surtos'],
+    suplementos:['L-Glutamina — 10g/dia','Probiótico multi-cepa — 50 bilhões UFC/dia','Cúrcuma — 1.000mg/dia','Ômega-3 — 3.000mg/dia','Vitamina D3 — 5.000 UI/dia','Zinco Carnosina — 75mg 2x/dia'],
+    chas:['Camomila — 3x/dia','Hortelã — antes das refeições','Boldo — 1x/dia'],
+    spooky:['Colitis (C) - JW','Colitis Ulcerosa (ETDFL)','Crohn\'s Disease (ETDFL)','Intestinal Inflammation (C) - JW','Gut Healing (C) - JW'] },
+
+  { keywords:['Liver','Hepatitis','Hepatic','Cirrhosis','Jaundice','Bile','Biliary','Gallbladder','Fatty Liver'], name:'Comprometimento Hepático / Fígado', sistema:'🍽️ Digestivo / Hepático',
+    relacionado:'Sobrecarga ou lesão hepática que compromete a detoxificação, síntese de proteínas e metabolismo lipídico — fígado gordo é forma mais comum.',
+    sintomas:['Fadiga e mal-estar geral','Sensação de peso no hipocôndrio direito','Náuseas e intolerância a gorduras','Pele ou olhos amarelados','Fezes claras / urina escura','Coceira na pele','Inchaço abdominal'],
+    suplementos:['Silimarina (Cardo Mariano) — 600–900mg/dia','Ácido Alfa-Lipóico — 600mg/dia','NAC — 600mg 2x/dia','Colina — 500mg/dia','Glutationa reduzida — 500mg/dia'],
+    chas:['Alcachofra — 3x/dia','Boldo — 2x/dia','Dente-de-leão — 2x/dia','Suco de beterraba — 1 copo/dia'],
+    spooky:['Liver Support (C) - JW','Liver Detox (C) - JW','Hepatitis General (CAFL)','Bile Stimulation (C) - JW','Fatty Liver (ETDFL)'] },
+
+  { keywords:['Kidney','Nephritis','Renal','Cystitis','Urinary','Bladder','Pyelonephritis','Urethritis','Enuresis'], name:'Comprometimento Renal / Urinário', sistema:'🫘 Renal / Urinário',
+    relacionado:'Inflamação ou disfunção renal que compromete a filtração sanguínea, equilíbrio eletrolítico e eliminação de toxinas.',
+    sintomas:['Dor lombar baixa (bilateral)','Ardência ou dor ao urinar','Urgência e frequência urinária','Urina turva ou com sangue','Inchaço nos membros inferiores','Fadiga e palidez','Hipertensão associada'],
+    suplementos:['D-Manose — 2g/dia (cistite)','Extrato de cranberry PAC 36mg — 2x/dia','Extrato de cavalinha — 400mg/dia','Hidratação 3L/dia','Vitamina C — 1.000mg/dia','Berberina — 500mg 2x/dia'],
+    chas:['Cavalinha — 3x/dia','Cranberry sem açúcar — 2x/dia','Dente-de-leão — 2x/dia','Uva ursi — 2x/dia (5–7 dias)'],
+    spooky:['Kidney Support (C) - JW','Cystitis (ETDFL)','Urinary Tract Infection (C) - JW','Nephritis (ETDFL)','Kidney Stones (CAFL)'] },
+
+  { keywords:['Psoriasis','Eczema','Dermatitis','Acne','Rosacea','Vitiligo','Furunculosis','Pemphigus','Alopecia'], name:'Disfunções de Pele / Dermatite', sistema:'🩹 Pele / Tegumento',
+    relacionado:'Inflamação cutânea crônica com componente imunológico — associada à disbiose intestinal (eixo intestino-pele), estresse oxidativo ou disfunção hepática.',
+    sintomas:['Vermelhidão e lesões na pele','Coceira intensa','Descamação ou crostas','Lesões pustulosas','Pele seca e sensível','Manchas e alterações pigmentares','Piora com estresse e alimentos inflamatórios'],
+    suplementos:['Zinco Quelado — 30–50mg/dia','Vitamina A — 10.000 UI/dia','Ômega-3 — 3.000mg/dia','Biotina B7 — 5.000mcg/dia','Probiótico — 30 bilhões UFC/dia','Vitamina D3 — 5.000 UI/dia'],
+    chas:['Bardana — 3x/dia','Calêndula (compressa) — local','Chá verde — 2x/dia','Urtiga — 2x/dia'],
+    spooky:['Psoriasis (C) - JW','Eczema (ETDFL)','Acne (C) - JW','Skin Health (C) - JW','Anti-inflammatory (C) - JW'] },
+
+  { keywords:['Adnexitis','Ovarian','Uterine','Dysmenorrhea','Fibroids','Myoma','Endometri','Menopause','Menstrual','PMS','PCOS','Sexual regul'], name:'Disfunção Hormonal / Ginecológica', sistema:'🌸 Reprodutivo Feminino',
+    relacionado:'Desequilíbrio hormonal feminino com dominância estrogênica, déficit de progesterona ou disfunção ovariana — frequentemente associado à disbiose e toxicidade ambiental.',
+    sintomas:['Cólicas menstruais intensas','TPM severa','Ciclos irregulares','Sangramentos excessivos','Endometriose ou miomas','Retenção de líquidos','Oscilações de humor acentuadas'],
+    suplementos:['Vitex Agnus Castus — 400mg/dia','DIM — 200mg/dia','Linhaça dourada — 2 colheres/dia','Ômega-3 — 2.000mg/dia','Magnésio Glicinato — 400mg/noite','Vitamina B6 — 100mg/dia'],
+    chas:['Gengibre — 3x/dia (cólicas)','Macela — 2x/dia','Framboesa vermelha — 2x/dia','Cimicifuga — 2x/dia (menopausa)'],
+    spooky:['Dysmenorrhea (ETDFL)','PMS (C) - JW','Hormonal Balance (C) - JW','Ovarian Cyst (CAFL)','Endometriosis (C) - JW','Menopause Support (C) - JW'] },
+
+  { keywords:['Fatigue','Chronic Fatigue','CFS','Adrenal','Adynamia','Weakness','Exhaustion','Energizing','Avitaminosis','Vitamin Deficiency'], name:'Fadiga Crônica / Esgotamento Adrenal', sistema:'⚡ Energia / Vitalidade',
+    relacionado:'Esgotamento das reservas energéticas celulares (disfunção mitocondrial) e/ou hipocortisolismo relativo — as células não produzem ATP suficiente.',
+    sintomas:['Cansaço extremo que não melhora com repouso','Dificuldade de acordar','Queda de energia à tarde (13–15h)','Intolerância ao exercício','Névoa mental','Hipoglicemia reativa','Sensibilidade a ruídos e luz'],
+    suplementos:['CoQ10 — 200–400mg/dia (mitocôndrias)','D-Ribose — 5g 2x/dia','NADH — 10–20mg/dia','Vitamina B12 sublingual — 2.000mcg/dia','Maca Peruana — 3.000mg/dia','Magnésio Malato — 600mg/dia'],
+    chas:['Chá verde (matcha) — manhã','Ginseng coreano — manhã','Hibisco com gengibre — tarde'],
+    spooky:['Chronic Fatigue (C) - JW','CFS (ETDFL)','Energizing (C) - JW','Adrenal Support (C) - JW','Mitochondria Support (C) - JW'] },
+
+  { keywords:['Detox','Heavy Metal','Toxin','Lead','Mercury','Aluminum','Arsenic','Chelation'], name:'Detox / Metais Pesados', sistema:'🧹 Detox / Parasitas',
+    relacionado:'Acúmulo de metais tóxicos (mercúrio, chumbo, alumínio, arsênio) nos tecidos — comprometem enzimas, mitocôndrias e sistema nervoso com quadro de toxicidade crônica.',
+    sintomas:['Névoa mental e comprometimento cognitivo','Fadiga crônica inexplicada','Dores musculares e articulares difusas','Distúrbios gastrointestinais','Alterações de humor','Tremores ou neuropatia','Sensibilidade química múltipla'],
+    suplementos:['Clorela — 5g/dia (quelação natural)','NAC — 600mg 2x/dia (glutationa endógena)','Ácido Alfa-Lipóico — 600mg/dia','Vitamina C — 3.000mg/dia','Zinco — 30mg/dia','DMSA (quelação médica supervisionada)'],
+    chas:['Coentro (cilantro) — 2x/dia','Dente-de-leão — 2x/dia','Bardana — 2x/dia','Água com limão em jejum — diário'],
+    spooky:['Heavy Metal Detox (C) - JW','Mercury Detox (CAFL)','Lead Detox (CAFL)','Detox Maintenance (C) - JW','Terrain Protocol (C) - JW'] },
+
+  { keywords:['Parasite','Tapeworm','Taenia','Roundworm','Flukes','Nematoda','Giardia','Pinworm','Hookworm','Antiparasitic'], name:'Parasitose Intestinal', sistema:'🧹 Detox / Parasitas',
+    relacionado:'Infestação por helmintas ou protozoários no trato gastrointestinal — causam má absorção de nutrientes, ativação crônica do imune e liberação de toxinas metabólicas.',
+    sintomas:['Distensão abdominal e gases','Diarreia ou constipação alternada','Coceira anal à noite','Bruxismo (ranger de dentes)','Anemia e fraqueza','Desejo por açúcar','Perda de peso sem causa','Irritabilidade'],
+    suplementos:['Extrato de noz preta (Black Walnut) — 500mg/dia','Sementes de abóbora — 100g em jejum (7 dias)','Óleo de orégano — 150mg/dia','Wormwood (Artemísia) — 200mg/dia','Probiótico pós-tratamento — 50 bilhões UFC/dia'],
+    chas:['Alho cru + mel — em jejum 7 dias','Boldo + hortelã — 2x/dia','Mamão com sementes — em jejum','Chá de cravo — 2x/dia'],
+    spooky:['Parasite General (C) - JW','Tapeworm (CAFL)','Roundworm (CAFL)','Giardia (CAFL)','Antiparasitic (C) - JW','Terrain Protocol (C) - JW'] },
+
+  { keywords:['Inflammation','Inflammatory','Autoimmune','Immune','Allerg','Histamine'], name:'Inflamação Crônica / Autoimunidade', sistema:'🦠 Infeccioso / Imunológico',
+    relacionado:'Ativação persistente do sistema imune com produção excessiva de citocinas inflamatórias (TNF-α, IL-6, IL-1β) — pode evoluir para processo autoimune.',
+    sintomas:['Dores e inflamação sistêmica','Fadiga inflamatória','Febre baixa crônica','Inchaço e edema','Rigidez matinal','Manchas ou vermelhidão na pele','PCR e VHS elevados'],
+    suplementos:['Cúrcuma + Piperina — 1.000mg/dia','Boswellia serrata — 600mg/dia','Ômega-3 — 3.000–4.000mg/dia','Resveratrol — 500mg/dia','Quercetina — 1.000mg/dia','Vitamina D3 — 10.000 UI/dia (fase ativa)'],
+    chas:['Cúrcuma + gengibre + pimenta preta — 3x/dia','Chá verde — 3x/dia','Salgueiro branco — 2x/dia'],
+    spooky:['Anti-inflammatory (C) - JW','Inflammation General (ETDFL)','Autoimmune (C) - JW','Immune Modulation (C) - JW','Cytokine Regulation (C) - JW'] },
+
+  { keywords:['Thyroid','Hypothyroid','Hyperthyroid','Hashimoto','Graves','Goiter','Thyroiditis'], name:'Disfunção da Tireoide', sistema:'⚡ Energia / Vitalidade',
+    relacionado:'Desequilíbrio da função tireoidiana afetando o metabolismo basal — hipotireoidismo causa lentidão sistêmica; hipertireoidismo causa hiperatividade.',
+    sintomas:['Hipotireoidismo: fadiga, ganho de peso, frio, constipação, queda de cabelo','Hipertireoidismo: ansiedade, perda de peso, palpitações, sudorese, insônia','Bócio (aumento da glândula)','Alterações de humor e cognição'],
+    suplementos:['Selênio — 200mcg/dia (conversão T4→T3)','Zinco — 30mg/dia','Vitamina D3 — 5.000 UI/dia','Magnésio — 400mg/dia','Ashwagandha — 600mg/dia (suporte TSH)'],
+    chas:['Ashwagandha — 2x/dia','Melissa (reduz T4 no hiper)','Bladderwrack/kelp — hipotireoidismo (com cautela)'],
+    spooky:['Hypothyroidism (C) - JW','Thyroid Support (ETDFL)','Hashimoto\'s (C) - JW','Thyroiditis (CAFL)','Hormonal Balance (C) - JW'] },
+
+  { keywords:['Diabetes','Glycemia','Insulin','Blood Sugar','Hyperglycemia','Metabolic Syndrome'], name:'Diabetes / Resistência Insulínica', sistema:'⚡ Energia / Vitalidade',
+    relacionado:'Disfunção no metabolismo da glicose com resistência à insulina — hiperglicemia crônica danifica vasos, nervos e órgãos progressivamente.',
+    sintomas:['Sede excessiva e micção frequente','Fadiga após refeições com carboidratos','Visão turva','Cicatrização lenta','Formigamento nos pés e mãos','Infecções recorrentes','Ganho de peso abdominal'],
+    suplementos:['Berberina — 500mg 3x/dia (antes das refeições)','Cromo picolinato — 400–600mcg/dia','Magnésio — 400mg/dia','Ácido Alfa-Lipóico — 600mg/dia','Canela — 1.500mg/dia','Ômega-3 — 3.000mg/dia'],
+    chas:['Canela — antes das refeições','Pata-de-vaca — 3x/dia','Carqueja — 2x/dia','Insulina (Cissus) — 2x/dia'],
+    spooky:['Diabetes Type 2 (ETDFL)','Insulin Resistance (C) - JW','Blood Sugar Regulation (C) - JW','Pancreas Support (C) - JW','Metabolic Syndrome (C) - JW'] },
+];
+
+function buildTopAnalysis(top10) {
+  return top10.map(prog => {
+    const pName = prog.name.toLowerCase();
+    const match = PROGRAM_ANALYSIS.find(def =>
+      def.keywords.some(kw => pName.includes(kw.toLowerCase()))
+    );
+    return { prog, analysis: match || null };
+  });
+}
+
+function toggleFA(id) {
+  const body = document.getElementById(id);
+  const tog = document.getElementById('tog-' + id);
+  const isOpen = body.classList.toggle('open');
+  tog.classList.toggle('open', isOpen);
+}
 
 function buildDiagnoses(systems) {
   const sc = id => (systems.find(s => s.id === id) || {}).score || 0;
@@ -720,6 +959,48 @@ function renderResults(prev) {
       <span class="p-cnt">${p.count}×</span>
     </div>`).join('');
 
+  // Análise por frequência
+  const topAnalysis = buildTopAnalysis(top10);
+  document.getElementById('topAnalysisCard').style.display = 'block';
+  document.getElementById('topAnalysisContent').innerHTML = topAnalysis.map((item, i) => {
+    const { prog, analysis } = item;
+    const bid = 'fa-' + i;
+    const header = `<div class="fa-header" onclick="toggleFA('${bid}')">
+      <span class="fa-rank">${i+1}°</span>
+      <span class="fa-name">${prog.name}</span>
+      <span class="fa-cnt">${prog.count}×</span>
+      <span class="fa-toggle" id="tog-${bid}">▼</span>
+    </div>`;
+    if (!analysis) {
+      return `<div class="freq-analysis">${header}<div class="fa-body" id="${bid}"><span class="fa-no-match">Programa específico do banco Spooky2 — análise detalhada não disponível na base local.</span></div></div>`;
+    }
+    const tags = (arr, cls) => arr.map(x => `<span class="fa-tag ${cls}">${x}</span>`).join('');
+    return `<div class="freq-analysis">${header}
+      <div class="fa-body" id="${bid}">
+        <div class="fa-section">
+          <div class="fa-section-title">Sistema &amp; Relação</div>
+          <div class="fa-rel"><strong>${analysis.sistema}</strong> — ${analysis.relacionado}</div>
+        </div>
+        <div class="fa-section">
+          <div class="fa-section-title">Sintomas Associados</div>
+          <div class="fa-tags">${tags(analysis.sintomas, 'sint')}</div>
+        </div>
+        <div class="fa-section">
+          <div class="fa-section-title">Suplementos Recomendados</div>
+          <div class="fa-tags">${tags(analysis.suplementos, 'trat')}</div>
+        </div>
+        <div class="fa-section">
+          <div class="fa-section-title">Chás &amp; Infusões</div>
+          <div class="fa-tags">${tags(analysis.chas, 'trat')}</div>
+        </div>
+        <div class="fa-section">
+          <div class="fa-section-title">Programas Spooky2 Recomendados</div>
+          <div class="fa-tags">${tags(analysis.spooky, 'spk')}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
   // Sintomas
   const sints = patient.sintomas ? patient.sintomas.split('\n').map(s => s.trim()).filter(Boolean) : [];
   if (sints.length > 0) {
@@ -1011,7 +1292,7 @@ function restart() {
   document.getElementById('formSection').style.display = 'block';
   fi.value = '';
   document.getElementById('uploadOk').textContent = '';
-  ['sintCard','custCard','parasitasCard','diagCard'].forEach(id => document.getElementById(id).style.display = 'none');
+  ['sintCard','custCard','parasitasCard','diagCard','topAnalysisCard'].forEach(id => document.getElementById(id).style.display = 'none');
   document.getElementById('copyCard').style.display = 'none';
   currentPreview = null;
   window.scrollTo({ top: 0, behavior: 'smooth' });
