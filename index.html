@@ -186,16 +186,82 @@ textarea{resize:vertical;min-height:88px;line-height:1.55}
 .fa-tag.spk{background:#f0f4ff;border-color:#a0b4f0;color:#1e3a8a;font-family:monospace;font-size:11px}
 .fa-no-match{font-size:13px;color:#9c8f7a;font-style:italic;padding:2px 0 12px}
 
+/* Botão Pacientes no Header */
+.btn-patients{display:inline-flex;align-items:center;gap:6px;margin-top:14px;padding:8px 20px;background:#fff;border:0.5px solid #d4cfc8;border-radius:8px;color:#3a3530;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;font-family:inherit;letter-spacing:.04em}
+.btn-patients:hover{background:#f5f3f0;border-color:#9c8f7a}
+
+/* Botão Salvar no resultado */
+.btn-save-profile{display:inline-flex;align-items:center;gap:6px;padding:7px 18px;background:#fff;border:0.5px solid #a7d7b8;border-radius:7px;color:#166534;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;font-family:inherit;margin-left:auto}
+.btn-save-profile:hover{background:#f0faf4}
+.btn-save-profile.saved{background:#f0faf4;border-color:#16a34a;color:#15803d}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(26,26,26,.45);backdrop-filter:blur(3px);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto}
+.modal-overlay.on{display:flex}
+.modal-panel{background:#fff;border-radius:14px;width:100%;max-width:580px;box-shadow:0 24px 64px rgba(0,0,0,.18);flex-shrink:0}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:20px 24px;border-bottom:0.5px solid #e0ddd8}
+.modal-title{font-size:15px;font-weight:600;color:#1a1a1a}
+.modal-subtitle{font-size:12px;color:#9c8f7a;margin-top:2px}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:#9c8f7a;padding:2px 8px;border-radius:6px;line-height:1;transition:all .2s;font-family:inherit}
+.modal-close:hover{background:#f0ede8;color:#1a1a1a}
+.modal-body{padding:12px 24px 20px;max-height:62vh;overflow-y:auto}
+.modal-footer{padding:14px 24px;border-top:0.5px solid #f0ede8;display:flex;align-items:center;justify-content:space-between;font-size:12px;color:#9c8f7a}
+.storage-bar-w{width:120px;height:4px;background:#e0ddd8;border-radius:2px;display:inline-block;vertical-align:middle;margin:0 6px}
+.storage-bar{height:100%;border-radius:2px;background:#b8860b;transition:width .4s}
+
+/* Patient items */
+.patient-item{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:0.5px solid #f0ede8}
+.patient-item:last-child{border:none}
+.pat-item-av{width:38px;height:38px;background:#f0ede8;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0}
+.pat-item-info{flex:1;min-width:0}
+.pat-item-name{font-size:14px;font-weight:600;color:#1a1a1a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pat-item-meta{font-size:11px;color:#9c8f7a;margin-top:2px}
+.pat-item-scans{display:inline-block;font-size:10px;padding:1px 7px;background:#fdf3d0;border:0.5px solid #e8dfc0;border-radius:4px;color:#7a5e0a;margin-left:6px;vertical-align:middle}
+.pat-actions{display:flex;gap:6px;flex-shrink:0}
+.btn-pat-load{font-size:12px;padding:6px 14px;border:0.5px solid #1a1a1a;border-radius:6px;background:#1a1a1a;color:#fff;cursor:pointer;transition:background .2s;font-family:inherit}
+.btn-pat-load:hover{background:#333}
+.btn-pat-del{font-size:12px;padding:6px 10px;border:0.5px solid #e0ddd8;border-radius:6px;background:#fff;color:#dc2626;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-pat-del:hover{background:#fff5f5;border-color:#fca5a5}
+.no-patients{text-align:center;padding:40px 20px;color:#9c8f7a;font-size:14px;font-style:italic}
+.pat-search{width:100%;padding:9px 12px;border:0.5px solid #d4cfc8;border-radius:8px;font-size:14px;font-family:inherit;outline:none;margin-bottom:12px;transition:border-color .2s}
+.pat-search:focus{border-color:#b8860b;box-shadow:0 0 0 3px rgba(184,134,11,.08)}
+
 @media(max-width:600px){.grid2,.grid3{grid-template-columns:1fr}.card{padding:20px 16px}.stats-row{margin-left:0;width:100%}}
 </style>
 </head>
 <body>
 <div class="app">
 
+<!-- Modal Pacientes -->
+<div class="modal-overlay" id="patientsModal" onclick="if(event.target===this)closePatientsModal()">
+  <div class="modal-panel">
+    <div class="modal-hdr">
+      <div>
+        <div class="modal-title">👥 Perfis de Pacientes</div>
+        <div class="modal-subtitle" id="modalSubtitle">Carregando...</div>
+      </div>
+      <button class="modal-close" onclick="closePatientsModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <input class="pat-search" id="patSearch" type="text" placeholder="Buscar paciente por nome..." oninput="renderPatientsList()">
+      <div id="patientsList"></div>
+    </div>
+    <div class="modal-footer">
+      <span id="storageInfo">0 pacientes salvos</span>
+      <span>
+        Uso:
+        <span class="storage-bar-w"><span class="storage-bar" id="storageBar" style="width:0%"></span></span>
+        <span id="storageUsed">0 KB</span> / ~5 MB
+      </span>
+    </div>
+  </div>
+</div>
+
 <header>
   <div class="eyebrow">Análise de Biofeedback Vibracional</div>
   <div class="logo">Doctor <span>Spooky</span></div>
   <div class="logo-sub">Reverse Lookup Decoder · Spooky2 GeneratorX</div>
+  <button class="btn-patients" onclick="openPatientsModal()">👥 &nbsp; Pacientes Salvos</button>
 </header>
 
 <!-- FORM -->
@@ -246,6 +312,9 @@ textarea{resize:vertical;min-height:88px;line-height:1.55}
 <div id="results">
 
   <div class="pat-hdr" id="patHdr"></div>
+  <div style="display:flex;justify-content:flex-end;margin:-8px 0 12px">
+    <button class="btn-save-profile" id="btnSaveProfile" onclick="saveCurrentPatient()">💾 &nbsp; Salvar Perfil do Paciente</button>
+  </div>
 
   <!-- Copy card -->
   <div class="copy-card" id="copyCard" style="display:none">
@@ -658,6 +727,129 @@ function buildDiagnoses(systems) {
     }
   });
   return results.sort((a, b) => b.conf - a.conf).slice(0, 10);
+}
+
+// ─────────────────────────────────────────────
+//  PACIENTES — CRUD local (localStorage)
+// ─────────────────────────────────────────────
+const DS_KEY = 'doctorspooky_patients';
+
+function getPatients() {
+  try { return JSON.parse(localStorage.getItem(DS_KEY) || '[]'); } catch { return []; }
+}
+
+function persistPatients(arr) {
+  localStorage.setItem(DS_KEY, JSON.stringify(arr));
+}
+
+function saveCurrentPatient() {
+  if (!currentPreview) return;
+  const prev = currentPreview;
+  const patients = getPatients();
+  const idx = patients.findIndex(p => p.nome === prev.patient.nome && p.dob === prev.patient.dob);
+
+  const profile = {
+    id: idx >= 0 ? patients[idx].id : Date.now().toString(),
+    nome: prev.patient.nome,
+    dob: prev.patient.dob,
+    peso: prev.patient.peso,
+    altura: prev.patient.altura,
+    sintomas: prev.patient.sintomas,
+    historico: prev.patient.historico,
+    lastScan: new Date().toISOString(),
+    scansCount: idx >= 0 ? (patients[idx].scansCount || 1) + 1 : 1,
+    results: {
+      systems: prev.systems,
+      top10: prev.top10,
+      parasites: prev.parasites ? prev.parasites.found : [],
+      hitsCount: prev.hits.length,
+      totalMentions: prev.totalMentions,
+      uniquePrograms: prev.uniquePrograms,
+      recomendacoes: prev.recomendacoes,
+    }
+  };
+
+  if (idx >= 0) { patients[idx] = profile; } else { patients.unshift(profile); }
+  persistPatients(patients);
+
+  const btn = document.getElementById('btnSaveProfile');
+  btn.innerHTML = '✓ &nbsp; Perfil Salvo!';
+  btn.classList.add('saved');
+  setTimeout(() => { btn.innerHTML = '💾 &nbsp; Salvar Perfil do Paciente'; btn.classList.remove('saved'); }, 2500);
+}
+
+function deletePatient(id) {
+  if (!confirm('Excluir este perfil permanentemente?')) return;
+  persistPatients(getPatients().filter(p => p.id !== id));
+  renderPatientsList();
+  updateStorageInfo();
+}
+
+function loadPatientProfile(id) {
+  const p = getPatients().find(p => p.id === id);
+  if (!p) return;
+  document.getElementById('nome').value = p.nome || '';
+  document.getElementById('dob').value = p.dob || '';
+  document.getElementById('peso').value = p.peso || '';
+  document.getElementById('altura').value = p.altura || '';
+  document.getElementById('sintomas').value = p.sintomas || '';
+  document.getElementById('historico').value = p.historico || '';
+  calcIMC();
+  closePatientsModal();
+  document.getElementById('results').className = '';
+  document.getElementById('formSection').style.display = 'block';
+  ['sintCard','custCard','parasitasCard','diagCard','topAnalysisCard'].forEach(id => document.getElementById(id).style.display = 'none');
+  currentPreview = null;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function openPatientsModal() {
+  renderPatientsList();
+  updateStorageInfo();
+  document.getElementById('patSearch').value = '';
+  document.getElementById('patientsModal').classList.add('on');
+}
+
+function closePatientsModal() {
+  document.getElementById('patientsModal').classList.remove('on');
+}
+
+function updateStorageInfo() {
+  const patients = getPatients();
+  const raw = localStorage.getItem(DS_KEY) || '';
+  const bytes = new Blob([raw]).size;
+  const kb = (bytes / 1024).toFixed(1);
+  const pct = Math.min((bytes / (5 * 1024 * 1024)) * 100, 100).toFixed(1);
+  document.getElementById('storageInfo').textContent = `${patients.length} paciente${patients.length !== 1 ? 's' : ''} salvo${patients.length !== 1 ? 's' : ''}`;
+  document.getElementById('storageUsed').textContent = kb + ' KB';
+  document.getElementById('storageBar').style.width = pct + '%';
+  document.getElementById('modalSubtitle').textContent = `${patients.length} perfil${patients.length !== 1 ? 's' : ''} · ${kb} KB usado`;
+}
+
+function renderPatientsList() {
+  const q = (document.getElementById('patSearch').value || '').toLowerCase();
+  const patients = getPatients().filter(p => !q || p.nome.toLowerCase().includes(q));
+  const el = document.getElementById('patientsList');
+  if (patients.length === 0) {
+    el.innerHTML = '<div class="no-patients">' + (q ? 'Nenhum paciente encontrado para "' + q + '".' : 'Nenhum perfil salvo ainda.<br>Gere um laudo e clique em <strong>Salvar Perfil do Paciente</strong>.') + '</div>';
+    return;
+  }
+  el.innerHTML = patients.map(p => {
+    const age = p.dob ? Math.floor((new Date() - new Date(p.dob)) / (365.25*24*3600*1000)) + ' anos' : '';
+    const scanDate = p.lastScan ? new Date(p.lastScan).toLocaleDateString('pt-BR') : '';
+    const alto = p.results && p.results.systems ? p.results.systems.filter(s => s.level === 'ALTO').length : 0;
+    return `<div class="patient-item">
+      <div class="pat-item-av">🔬</div>
+      <div class="pat-item-info">
+        <div class="pat-item-name">${p.nome}<span class="pat-item-scans">${p.scansCount || 1} scan${(p.scansCount||1)>1?'s':''}</span></div>
+        <div class="pat-item-meta">${[age, scanDate ? 'Último scan: '+scanDate : '', alto ? alto+' sistema(s) ALTO' : ''].filter(Boolean).join(' · ')}</div>
+      </div>
+      <div class="pat-actions">
+        <button class="btn-pat-load" onclick="loadPatientProfile('${p.id}')">Carregar</button>
+        <button class="btn-pat-del" onclick="deletePatient('${p.id}')">✕</button>
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ─────────────────────────────────────────────
