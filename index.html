@@ -191,9 +191,10 @@ textarea{resize:vertical;min-height:88px;line-height:1.55}
 .btn-patients:hover{background:#f5f3f0;border-color:#9c8f7a}
 
 /* Botão Salvar no resultado */
-.btn-save-profile{display:inline-flex;align-items:center;gap:6px;padding:7px 18px;background:#fff;border:0.5px solid #a7d7b8;border-radius:7px;color:#166534;font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;font-family:inherit;margin-left:auto}
-.btn-save-profile:hover{background:#f0faf4}
-.btn-save-profile.saved{background:#f0faf4;border-color:#16a34a;color:#15803d}
+.btn-save-big{width:100%;padding:16px;background:#1a4a2e;border:none;border-radius:8px;color:#fff;font-family:inherit;font-size:15px;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:all .2s;margin-top:4px}
+.btn-save-big:hover{background:#15803d;transform:translateY(-1px);box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.btn-save-big.saved{background:#166534;cursor:default;transform:none}
+.btn-save-big:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
 /* Modal */
 .modal-overlay{position:fixed;inset:0;background:rgba(26,26,26,.45);backdrop-filter:blur(3px);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:32px 16px;overflow-y:auto}
@@ -218,6 +219,8 @@ textarea{resize:vertical;min-height:88px;line-height:1.55}
 .pat-item-meta{font-size:11px;color:#9c8f7a;margin-top:2px}
 .pat-item-scans{display:inline-block;font-size:10px;padding:1px 7px;background:#fdf3d0;border:0.5px solid #e8dfc0;border-radius:4px;color:#7a5e0a;margin-left:6px;vertical-align:middle}
 .pat-actions{display:flex;gap:6px;flex-shrink:0}
+.btn-pat-view{font-size:12px;padding:6px 14px;border:0.5px solid #1a4a2e;border-radius:6px;background:#f0faf4;color:#166534;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn-pat-view:hover{background:#dcfce7}
 .btn-pat-load{font-size:12px;padding:6px 14px;border:0.5px solid #1a1a1a;border-radius:6px;background:#1a1a1a;color:#fff;cursor:pointer;transition:background .2s;font-family:inherit}
 .btn-pat-load:hover{background:#333}
 .btn-pat-del{font-size:12px;padding:6px 10px;border:0.5px solid #e0ddd8;border-radius:6px;background:#fff;color:#dc2626;cursor:pointer;transition:all .2s;font-family:inherit}
@@ -312,8 +315,9 @@ textarea{resize:vertical;min-height:88px;line-height:1.55}
 <div id="results">
 
   <div class="pat-hdr" id="patHdr"></div>
-  <div style="display:flex;justify-content:flex-end;margin:-8px 0 12px">
-    <button class="btn-save-profile" id="btnSaveProfile" onclick="saveCurrentPatient()">💾 &nbsp; Salvar Perfil do Paciente</button>
+  <div class="card" style="background:#f0faf4;border-color:#a7d7b8;margin-bottom:16px">
+    <div style="font-size:13px;color:#166534;margin-bottom:10px;font-weight:500">💾 Salvar perfil e laudo deste paciente para acessar depois</div>
+    <button class="btn-save-big" id="btnSaveProfile" onclick="saveCurrentPatient()">💾 &nbsp; Salvar Paciente + Laudo Completo</button>
   </div>
 
   <!-- Copy card -->
@@ -743,39 +747,50 @@ function persistPatients(arr) {
 }
 
 function saveCurrentPatient() {
-  if (!currentPreview) return;
-  const prev = currentPreview;
-  const patients = getPatients();
-  const idx = patients.findIndex(p => p.nome === prev.patient.nome && p.dob === prev.patient.dob);
-
-  const profile = {
-    id: idx >= 0 ? patients[idx].id : Date.now().toString(),
-    nome: prev.patient.nome,
-    dob: prev.patient.dob,
-    peso: prev.patient.peso,
-    altura: prev.patient.altura,
-    sintomas: prev.patient.sintomas,
-    historico: prev.patient.historico,
-    lastScan: new Date().toISOString(),
-    scansCount: idx >= 0 ? (patients[idx].scansCount || 1) + 1 : 1,
-    results: {
-      systems: prev.systems,
-      top10: prev.top10,
-      parasites: prev.parasites ? prev.parasites.found : [],
-      hitsCount: prev.hits.length,
-      totalMentions: prev.totalMentions,
-      uniquePrograms: prev.uniquePrograms,
-      recomendacoes: prev.recomendacoes,
-    }
-  };
-
-  if (idx >= 0) { patients[idx] = profile; } else { patients.unshift(profile); }
-  persistPatients(patients);
-
   const btn = document.getElementById('btnSaveProfile');
-  btn.innerHTML = '✓ &nbsp; Perfil Salvo!';
-  btn.classList.add('saved');
-  setTimeout(() => { btn.innerHTML = '💾 &nbsp; Salvar Perfil do Paciente'; btn.classList.remove('saved'); }, 2500);
+  if (!currentPreview) {
+    btn.textContent = '⚠️  Nenhum laudo gerado — processe um scan primeiro';
+    setTimeout(() => { btn.innerHTML = '💾 &nbsp; Salvar Paciente + Laudo Completo'; }, 3000);
+    return;
+  }
+  try {
+    const prev = currentPreview;
+    const patients = getPatients();
+    const idx = patients.findIndex(p => p.nome === prev.patient.nome && p.dob === prev.patient.dob);
+    const profile = {
+      id: idx >= 0 ? patients[idx].id : Date.now().toString(),
+      nome: prev.patient.nome,
+      dob: prev.patient.dob,
+      peso: prev.patient.peso,
+      altura: prev.patient.altura,
+      sintomas: prev.patient.sintomas,
+      historico: prev.patient.historico,
+      lastScan: new Date().toISOString(),
+      scansCount: idx >= 0 ? (patients[idx].scansCount || 1) + 1 : 1,
+      results: {
+        systems: prev.systems,
+        top10: prev.top10,
+        custPrograms: prev.custPrograms || [],
+        hits: prev.hits,
+        totalMentions: prev.totalMentions,
+        uniquePrograms: prev.uniquePrograms,
+        recomendacoes: prev.recomendacoes,
+        parasites: prev.parasites ? prev.parasites.found : [],
+      }
+    };
+    if (idx >= 0) { patients[idx] = profile; } else { patients.unshift(profile); }
+    persistPatients(patients);
+    btn.innerHTML = '✓ &nbsp; Salvo com sucesso! Ver em "Pacientes Salvos"';
+    btn.classList.add('saved');
+    btn.disabled = true;
+    setTimeout(() => {
+      btn.innerHTML = '💾 &nbsp; Salvar Paciente + Laudo Completo';
+      btn.classList.remove('saved');
+      btn.disabled = false;
+    }, 4000);
+  } catch(e) {
+    alert('Erro ao salvar: ' + e.message + '\n\nO armazenamento do navegador pode estar cheio. Tente excluir perfis antigos.');
+  }
 }
 
 function deletePatient(id) {
@@ -798,9 +813,35 @@ function loadPatientProfile(id) {
   closePatientsModal();
   document.getElementById('results').className = '';
   document.getElementById('formSection').style.display = 'block';
-  ['sintCard','custCard','parasitasCard','diagCard','topAnalysisCard'].forEach(id => document.getElementById(id).style.display = 'none');
+  ['sintCard','custCard','parasitasCard','diagCard','topAnalysisCard'].forEach(i => document.getElementById(i).style.display = 'none');
   currentPreview = null;
   window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function loadPatientResults(id) {
+  const p = getPatients().find(p => p.id === id);
+  if (!p || !p.results) { alert('Laudo não disponível para este perfil.'); return; }
+  const r = p.results;
+  const age = p.dob ? Math.floor((new Date() - new Date(p.dob)) / (365.25*24*3600*1000)) : null;
+  const imc = (p.peso && p.altura) ? (parseFloat(p.peso) / Math.pow(parseFloat(p.altura)/100, 2)).toFixed(1) : null;
+  const parasiteFound = r.parasites || [];
+  const grouped = {};
+  parasiteFound.forEach(f => { if (!grouped[f.cat]) grouped[f.cat] = []; grouped[f.cat].push(f); });
+  currentPreview = {
+    patient: { nome: p.nome, dob: p.dob, peso: p.peso, altura: p.altura, sintomas: p.sintomas, historico: p.historico, age, imc },
+    systems: r.systems || [],
+    top10: r.top10 || [],
+    custPrograms: r.custPrograms || [],
+    hits: r.hits || [],
+    recomendacoes: r.recomendacoes || { suplementos:[], chas:[], dieta:[], activeSystems:[], triggerLabels:[], totalBase:0 },
+    parasites: { found: parasiteFound, grouped },
+    totalMentions: r.totalMentions || 0,
+    uniquePrograms: r.uniquePrograms || 0,
+  };
+  closePatientsModal();
+  document.getElementById('formSection').style.display = 'none';
+  ['sintCard','custCard','parasitasCard','diagCard','topAnalysisCard'].forEach(i => document.getElementById(i).style.display = 'none');
+  renderResults(currentPreview);
 }
 
 function openPatientsModal() {
@@ -838,6 +879,7 @@ function renderPatientsList() {
     const age = p.dob ? Math.floor((new Date() - new Date(p.dob)) / (365.25*24*3600*1000)) + ' anos' : '';
     const scanDate = p.lastScan ? new Date(p.lastScan).toLocaleDateString('pt-BR') : '';
     const alto = p.results && p.results.systems ? p.results.systems.filter(s => s.level === 'ALTO').length : 0;
+    const hasResults = !!(p.results && p.results.top10 && p.results.top10.length);
     return `<div class="patient-item">
       <div class="pat-item-av">🔬</div>
       <div class="pat-item-info">
@@ -845,6 +887,7 @@ function renderPatientsList() {
         <div class="pat-item-meta">${[age, scanDate ? 'Último scan: '+scanDate : '', alto ? alto+' sistema(s) ALTO' : ''].filter(Boolean).join(' · ')}</div>
       </div>
       <div class="pat-actions">
+        ${hasResults ? `<button class="btn-pat-view" onclick="loadPatientResults('${p.id}')">📋 Ver Laudo</button>` : ''}
         <button class="btn-pat-load" onclick="loadPatientProfile('${p.id}')">Carregar</button>
         <button class="btn-pat-del" onclick="deletePatient('${p.id}')">✕</button>
       </div>
