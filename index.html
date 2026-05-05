@@ -1339,14 +1339,38 @@ async function doCopy(id, btn) {
 // ─────────────────────────────────────────────
 //  DOCX GENERATION (browser, sem servidor)
 // ─────────────────────────────────────────────
+async function loadDocxLib() {
+  if (window.docx) return true;
+  const urls = [
+    'https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.min.js',
+    'https://unpkg.com/docx@8.5.0/build/index.umd.min.js',
+  ];
+  for (const url of urls) {
+    try {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = url;
+        s.onload = resolve;
+        s.onerror = reject;
+        document.head.appendChild(s);
+      });
+      if (window.docx) return true;
+    } catch {}
+  }
+  return false;
+}
+
 async function gerarDocx() {
   if (!currentPreview) return;
   const btn = document.getElementById('btnDl');
-  btn.textContent = '⏳ Gerando...';
+  btn.textContent = '⏳ Carregando biblioteca...';
   btn.disabled = true;
   try {
+    const ok = await loadDocxLib();
+    if (!ok) throw new Error('Não foi possível carregar a biblioteca de geração de documentos. Verifique sua conexão com a internet e tente novamente.');
+    btn.textContent = '⏳ Gerando...';
     const { Document, Packer, Paragraph, TextRun, Table, TableRow, TableCell,
-            AlignmentType, BorderStyle, WidthType, ShadingType, VerticalAlign, PageBreak } = docx;
+            AlignmentType, BorderStyle, WidthType, ShadingType, VerticalAlign, PageBreak } = window.docx;
 
     const prev = currentPreview;
     const { patient, systems, top10, hits, custPrograms, recomendacoes } = prev;
@@ -1534,8 +1558,6 @@ function restart() {
 }
 </script>
 
-<!-- docx.js via CDN para geração do laudo no browser -->
-<script src="https://cdn.jsdelivr.net/npm/docx@9.6.1/build/index.umd.js"></script>
 
 </body>
 </html>
