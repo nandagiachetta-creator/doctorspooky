@@ -1630,9 +1630,53 @@ async function gerarDocx() {
       sp(), new Paragraph({children:[new PageBreak()]})
     );
 
+    // PROTOCOLO POR ACESSÓRIO
+    const stripHtml = t => (t||'').replace(/<strong>/g,'').replace(/<\/strong>/g,'').replace(/<[^>]+>/g,'');
+    const ACC_DOCX = [
+      { id:'remote',  label:'📡 Remote Mode (24h)' },
+      { id:'contact', label:'🔌 Contact Mode (Pads)' },
+      { id:'laser',   label:'🔴 Cold Laser' },
+      { id:'pemf',    label:'🧲 PEMF / Bobina' },
+      { id:'plasma',  label:'💡 Plasma Tube' },
+    ];
+    const topSysAcc = systems.filter(s => s.score > 0).slice(0, 6);
+    children.push(secH('7. PROTOCOLO POR ACESSÓRIO — INSTRUÇÕES DE USO'), sp(),
+      noteB('Este protocolo detalha como usar cada acessório Spooky2 para os sistemas detectados no scan. Use as informações conforme os acessórios disponíveis.'), sp()
+    );
+    topSysAcc.forEach(sys => {
+      const db = SYSTEM_ACCESSORY_DB[sys.id];
+      if (!db) return;
+      const lvColor = sys.level === 'ALTO' ? 'dc2626' : sys.level === 'MODERADO' ? 'd97706' : '166534';
+      children.push(new Paragraph({ spacing:{before:200,after:80}, children:[
+        new TextRun({ text: sys.name + ' ', size:24, bold:true, font:'Arial', color:C_BLUE }),
+        new TextRun({ text: `[${sys.level} · ${sys.score.toLocaleString('pt-BR')} pts]`, size:20, font:'Arial', color:lvColor }),
+      ]}));
+      ACC_DOCX.forEach(acc => {
+        const proto = db[acc.id];
+        if (!proto) return;
+        const instrucoes = stripHtml(proto.instrucoes || '');
+        const programas = proto.programas && proto.programas.length ? proto.programas.join('  ·  ') : null;
+        const busterRow = acc.id === 'contact'
+          ? [['Usar Buster?', proto.buster ? '⚡ SIM — Buster recomendado para potencializar o sinal' : '✓ Não é necessário o Buster']]
+          : [];
+        const rows = [
+          ...busterRow,
+          ['Instruções', instrucoes],
+          ...(programas ? [['Programas Spooky2', programas]] : []),
+        ];
+        children.push(
+          new Paragraph({ spacing:{before:120,after:40}, children:[new TextRun({ text: acc.label, size:22, bold:true, font:'Arial', color:C_DARK })]}),
+          mkTable(['CONFIGURAÇÃO','DETALHES'], rows, [2000,7360], C_DARK),
+          sp()
+        );
+      });
+      children.push(sp());
+    });
+    children.push(new Paragraph({children:[new PageBreak()]}));
+
     // ORIENTAÇÕES
     children.push(
-      secH('7. ORIENTAÇÕES GERAIS'), sp(),
+      secH('8. ORIENTAÇÕES GERAIS'), sp(),
       mkTable(['ÁREA','ORIENTAÇÃO'],[
         ['Remote Mode','Pode ficar ativo 24h, inclusive dormindo. Tubo próximo ao travesseiro.'],
         ['Contact Mode','Sessões 2–3h. Pads no punho direito + tornozelo esquerdo. NUNCA acima dos ombros ou próximo ao coração. Não usar com marcapasso.'],
