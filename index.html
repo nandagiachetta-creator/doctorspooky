@@ -253,6 +253,30 @@ textarea{resize:vertical;min-height:88px;line-height:1.55}
 .pat-search:focus{border-color:#b8860b;box-shadow:0 0 0 3px rgba(184,134,11,.08)}
 
 @media(max-width:600px){.grid2,.grid3{grid-template-columns:1fr}.card{padding:20px 16px}.stats-row{margin-left:0;width:100%}}
+
+/* ── ACESSÓRIOS ── */
+.acc-selector-label{font-size:13px;font-weight:500;color:#3a3530;margin-bottom:12px}
+.acc-checks{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:4px}
+.acc-check{display:flex;align-items:center;gap:8px;padding:8px 14px;border:0.5px solid #d4cfc8;border-radius:8px;cursor:pointer;font-size:13px;color:#3a3530;background:#fafaf8;transition:all .2s;user-select:none}
+.acc-check:hover{border-color:#b8860b;background:#fdf9f0}
+.acc-check.checked{border-color:#b8860b;background:#fdf3d0;font-weight:500}
+.acc-check input[type=checkbox]{accent-color:#b8860b;width:15px;height:15px;cursor:pointer}
+.acc-badge-sm{font-size:11px;color:#9c8f7a;font-style:italic}
+.acc-protocol{margin-top:20px;display:flex;flex-direction:column;gap:14px}
+.acc-sys-block{border:0.5px solid #e0ddd8;border-radius:10px;overflow:hidden}
+.acc-sys-header{background:#f5f3f0;padding:10px 16px;font-size:13px;font-weight:600;color:#1a1a1a;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.acc-sys-level{font-size:11px;color:#9c8f7a;font-weight:400;padding:2px 8px;border-radius:4px;background:#fff;border:0.5px solid #e0ddd8}
+.acc-sys-level.alto{color:#dc2626;border-color:#fca5a5;background:#fff0f0}
+.acc-sys-level.moderado{color:#d97706;border-color:#fcd34d;background:#fffbeb}
+.acc-device-block{padding:14px 16px;border-top:0.5px solid #f0ede8}
+.acc-device-title{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#b8860b;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.acc-buster-yes{font-size:11px;padding:2px 10px;background:#fff0e8;border:0.5px solid #f59e0b;border-radius:6px;color:#92400e;font-weight:600;letter-spacing:0}
+.acc-buster-no{font-size:11px;padding:2px 10px;background:#f0faf4;border:0.5px solid #a7d7b8;border-radius:6px;color:#166534;letter-spacing:0}
+.acc-instrucoes{font-size:13px;color:#3a3530;line-height:1.7;background:#fafaf8;border-radius:7px;padding:10px 14px;border:0.5px solid #e8e4df}
+.acc-instrucoes strong{color:#b8860b}
+.acc-programas{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+.acc-empty{font-size:13px;color:#9c8f7a;font-style:italic;padding:20px 0;text-align:center}
+.acc-warning{background:#fff0e8;border:0.5px solid #f59e0b;border-radius:7px;padding:8px 13px;font-size:12px;color:#92400e;margin-top:8px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -433,6 +457,16 @@ textarea{resize:vertical;min-height:88px;line-height:1.55}
   <div class="card" id="diagCard" style="display:none">
     <div class="card-title">Possibilidades de Diagnóstico</div>
     <div id="diagContent"></div>
+  </div>
+
+  <!-- Protocolo por Acessório -->
+  <div class="card" id="accessorioCard" style="display:none">
+    <div class="card-title">Protocolo de Tratamento por Acessório Spooky2</div>
+    <div class="acc-selector">
+      <div class="acc-selector-label">Quais acessórios você tem disponíveis? Selecione para ver as instruções personalizadas:</div>
+      <div class="acc-checks" id="accChecks"></div>
+    </div>
+    <div id="accessorioContent"><div class="acc-empty">Selecione ao menos um acessório acima para ver o protocolo personalizado para este scan.</div></div>
   </div>
 
   <!-- Download -->
@@ -899,7 +933,7 @@ function loadPatientProfile(id) {
   closePatientsModal();
   document.getElementById('results').className = '';
   document.getElementById('formSection').style.display = 'block';
-  ['sintCard','custCard','parasitasCard','diagCard','topAnalysisCard'].forEach(i => document.getElementById(i).style.display = 'none');
+  ['sintCard','custCard','parasitasCard','diagCard','topAnalysisCard','accessorioCard'].forEach(i => document.getElementById(i).style.display = 'none');
   currentPreview = null;
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
@@ -926,7 +960,7 @@ function loadPatientResults(id) {
   };
   closePatientsModal();
   document.getElementById('formSection').style.display = 'none';
-  ['sintCard','custCard','parasitasCard','diagCard','topAnalysisCard'].forEach(i => document.getElementById(i).style.display = 'none');
+  ['sintCard','custCard','parasitasCard','diagCard','topAnalysisCard','accessorioCard'].forEach(i => document.getElementById(i).style.display = 'none');
   renderResults(currentPreview);
 }
 
@@ -1399,6 +1433,11 @@ function renderResults(prev) {
       '<div class="diag-disclaimer">⚠️ Estas possibilidades são baseadas exclusivamente nos padrões de frequência do scan Spooky2 e têm caráter experimental. Não constituem diagnóstico médico. Sempre consulte um profissional de saúde habilitado.</div>';
   }
 
+  // Accessory card
+  document.getElementById('accessorioCard').style.display = 'block';
+  renderAccessorioCard();
+  updateAccessorios();
+
   document.getElementById('results').className = 'on';
   document.getElementById('fabSave').className = 'fab-save visible';
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1631,6 +1670,173 @@ async function gerarDocx() {
 }
 
 // ─────────────────────────────────────────────
+//  ACESSÓRIOS SPOOKY2
+// ─────────────────────────────────────────────
+const ACESSORIOS_LISTA = [
+  { id:'remote',  icon:'📡', nome:'Remote Mode',     badge:'24h, inclusive dormindo' },
+  { id:'contact', icon:'🔌', nome:'Contact (Pads)',   badge:'2–3h por sessão' },
+  { id:'laser',   icon:'🔴', nome:'Cold Laser',       badge:'Aplicação local' },
+  { id:'pemf',    icon:'🧲', nome:'PEMF / Bobina',    badge:'30–60 min' },
+  { id:'plasma',  icon:'💡', nome:'Plasma Tube',      badge:'30–60 min' },
+];
+
+const SYSTEM_ACCESSORY_DB = {
+  neurologico: {
+    remote:  { buster:false, instrucoes:'Use <strong>Remote Mode 24h</strong>, inclusive durante o sono — coloque o tubo próximo ao travesseiro. Comece com presets de Stress/Ansiedade por 5 dias, depois evolua para Sleep ou Depression conforme o quadro principal.', programas:['Stress (C) - JW','Anxiety and Stress (ETDFL)','Depression (ETDFL)','Insomnia (C) - JW','Neurotransmitter Support (C) - JW','Delta Sleep Induction (C) - JW','Emotional Wellbeing (C) - JW'] },
+    contact: { buster:false, instrucoes:'Pads no <strong>pulso esquerdo + tornozelo direito</strong>. Sessão de 2h, 1–2x ao dia. <strong>NÃO</strong> posicione eletrodos na cabeça, pescoço ou acima dos ombros. Intensidade baixa a moderada.', programas:['Relaxation and Calmness (C) - JW','Mood Enhancement (C) - JW','Sleep Aid (ETDFL)'] },
+    laser:   { instrucoes:'Aplique o laser frio em pontos de acupuntura: <strong>Yin Tang</strong> (entre as sobrancelhas), <strong>P6</strong> (face interna do punho, 3 dedos acima do pulso), <strong>HT7</strong> (dobra interna do punho). 2–3 minutos por ponto, 1x ao dia.' },
+    pemf:    { instrucoes:'Bobina PEMF próxima à <strong>nuca ou apoiada nas costas do ombro</strong>. Sessão de 30–45 min com frequências baixas (0,5–10 Hz ideal para relaxamento). Ideal usar antes de dormir.' },
+    plasma:  { instrucoes:'Tubo de plasma a <strong>30–60 cm acima da cabeça</strong> ou do corpo. Sessão de 30–45 min ao dia. Muito eficaz para condições neurológicas e emocionais crônicas.' },
+  },
+  musculo: {
+    remote:  { buster:false, instrucoes:'<strong>Remote Mode 12–24h/dia.</strong> Presets conforme condição: artrite → Arthritis (C) - JW; lombalgia/ciática → Spine and Disc (C) - JW; fibromialgia → Fibromyalgia (C) - JW; dor geral → Pain Relief (C) - JW. Alterne a cada 3–5 dias.', programas:['Arthritis (C) - JW','Pain Relief (C) - JW','Fibromyalgia (C) - JW','Spine and Disc (C) - JW','Joint Inflammation (C) - JW','Muscle Relaxation (C) - JW','Sciatica (ETDFL)'] },
+    contact: { buster:true, instrucoes:'O <strong>BUSTER é INDICADO</strong> para dor musculoesquelética — potencializa o sinal local e aumenta penetração. Posicione os pads <strong>diretamente na área de dor</strong> (joelho, lombar, ombro, tornozelo). Para ciática: pad na lombar + pad na panturrilha ipsilateral. Sessão de 1–3h, 2x ao dia.', programas:['Pain Relief General (C) - JW','Joint Inflammation (C) - JW','Sciatica (ETDFL)','Rheumatoid Arthritis (ETDFL)'] },
+    laser:   { instrucoes:'Laser frio <strong>diretamente sobre o ponto de dor</strong> ou articulação. Mova lentamente em movimentos circulares, 5–10 min por área. Excelente para tendinites, bursites, articulações inflamadas e trigger points. Para artrose: mova sobre toda a articulação.' },
+    pemf:    { instrucoes:'Bobina PEMF <strong>sobre a articulação ou músculo afetado</strong>. Sessão de 30–60 min. Muito eficaz para artrites, artrose e regeneração de cartilagem. Para coluna: posicione ao longo da região lombossacral.' },
+    plasma:  null,
+  },
+  infeccioso: {
+    remote:  { buster:false, instrucoes:'<strong>Remote Mode 24h.</strong> Comece SEMPRE com <strong>Terrain Protocol (C) - JW por 7 dias</strong> (preparo do terreno) antes dos presets específicos. Depois alterne os presets a cada 3 dias para evitar adaptação dos patógenos.', programas:['Terrain Protocol (C) - JW','Bacteria General (C) - JW','Antiviral (C) - JW','Biofilm Buster (C) - JW','Immune Boost (C) - JW','Detox Maintenance (C) - JW','Immune System (C) - JW'] },
+    contact: { buster:true, instrucoes:'<strong>BUSTER É ALTAMENTE INDICADO</strong> para infecções — aumenta a penetração tecidual e potência do sinal, essencial para quebrar biofilmes. Pads no <strong>pulso direito + tornozelo esquerdo</strong>. Para infecção localizada, posicione um pad diretamente sobre a área. Sessão de 2–3h, 1–2x ao dia. Reação Herxheimer é esperada — beba 3L de água/dia.', programas:['Bacteria General (C) - JW','Biofilm Buster (C) - JW','Antiviral (C) - JW','Immune Boost (C) - JW'] },
+    laser:   { instrucoes:'Laser frio sobre os <strong>linfonodos</strong> (axilas, virilha, cadeia cervical) e sobre o <strong>esterno/timo</strong>. 3 min por ponto. Estimula imunidade local e drenagem linfática. Para infecções na garganta: aplicar externamente no pescoço.' },
+    pemf:    null,
+    plasma:  { instrucoes:'Plasma é altamente eficaz para infecções sistêmicas e virais. Tubo a <strong>30 cm do corpo</strong>. Sessão de 45–60 min. Pode gerar reação Herxheimer nos primeiros dias — comece com 20 min e aumente progressivamente. Beba 3L de água/dia.' },
+  },
+  respiratorio: {
+    remote:  { buster:false, instrucoes:'<strong>Remote Mode 24h.</strong> Presets por condição: sinusite → Sinusitis (C) - JW; bronquite → Bronchitis (ETDFL); asma → Asthma (C) - JW; rinite → Rhinitis (ETDFL). Combine sempre com Anti-inflammatory (C) - JW.', programas:['Sinusitis (C) - JW','Respiratory (C) - JW','Bronchitis (ETDFL)','Asthma (C) - JW','Rhinitis (ETDFL)','Anti-inflammatory (C) - JW','Lung Support (C) - JW'] },
+    contact: { buster:false, instrucoes:'Pads no <strong>esterno (peito) e entre as escápulas (costas)</strong>. Sessão de 2h, 2x ao dia. Para sinusite: coloque um pad na testa e outro na nuca. Não use pads próximo ao coração em caso de arritmia.', programas:['Lung Support (C) - JW','Sinusitis (C) - JW','Asthma (C) - JW'] },
+    laser:   { instrucoes:'Sinusite: laser sobre os <strong>seios paranasais</strong> (região frontal, abaixo dos olhos, laterais do nariz). 5 min por área. Via respiratória inferior: sobre o <strong>esterno e espaços intercostais</strong> frontais. Asma: parte superior do peito. 10 min por região.' },
+    pemf:    { instrucoes:'Bobina PEMF sobre o <strong>peito ou costas</strong>. Sessão de 30 min. Auxilia na resolução de inflamação brônquica, sinusal e melhora do fluxo aéreo.' },
+    plasma:  null,
+  },
+  cardiovascular: {
+    remote:  { buster:false, instrucoes:'<strong>Remote Mode 24h.</strong> Presets: Hypertension (C) - JW, Cardiac Support (C) - JW, Circulation (C) - JW, Arteriosclerosis (CAFL). Nunca suspenda medicação cardiovascular sem orientação médica.', programas:['Hypertension (C) - JW','Cardiac Support (C) - JW','Circulation (C) - JW','Arteriosclerosis (CAFL)','Arrhythmia (ETDFL)'] },
+    contact: { buster:false, instrucoes:'⚠️ <strong>ATENÇÃO:</strong> Use SOMENTE <strong>pulso direito + tornozelo esquerdo</strong>. NUNCA posicione pads próximos ao coração. Intensidade MÍNIMA. Sessão de 1h, 1x ao dia. <strong>NÃO usar se houver marcapasso implantado.</strong>', programas:['Circulation (C) - JW'] },
+    laser:   null,
+    pemf:    null,
+    plasma:  null,
+  },
+  renal: {
+    remote:  { buster:false, instrucoes:'<strong>Remote Mode 24h.</strong> Presets: Kidney Support (C) - JW, Cystitis (ETDFL), Urinary Tract Infection (C) - JW, Nephritis (ETDFL). Aumente a hidratação (3L/dia) durante todo o protocolo renal.', programas:['Kidney Support (C) - JW','Cystitis (ETDFL)','Urinary Tract Infection (C) - JW','Nephritis (ETDFL)','Kidney Stones (CAFL)'] },
+    contact: { buster:false, instrucoes:'Pads na <strong>região lombar baixa (sobre os rins)</strong> e na parte inferior do abdômen. Sessão de 2h, 1x ao dia. Beba 3L de água/dia — essencial durante o protocolo renal.', programas:['Kidney Support (C) - JW','Cystitis (ETDFL)'] },
+    laser:   null,
+    pemf:    { instrucoes:'Bobina PEMF sobre a <strong>região lombar (altura dos rins)</strong>. Sessão de 30 min. Auxilia na resolução de inflamação renal, infecções urinárias e litíase renal.' },
+    plasma:  null,
+  },
+  digestivo: {
+    remote:  { buster:false, instrucoes:'<strong>Remote Mode 24h.</strong> Presets por condição: gastrite → Gastritis (C) - JW; H. pylori → H Pylori (CAFL); fígado → Liver Support (C) - JW; intestino → Intestinal Dysbiosis (C) - JW + Gut Healing (C) - JW. Alterne a cada 5 dias.', programas:['Gastritis (C) - JW','H Pylori (CAFL)','Liver Support (C) - JW','Liver Detox (C) - JW','Intestinal Dysbiosis (C) - JW','Gut Healing (C) - JW','Stomach Support (C) - JW'] },
+    contact: { buster:false, instrucoes:'Pads sobre o abdômen: <strong>um acima do umbigo</strong> (estômago/fígado) e <strong>um abaixo</strong> (intestino). Sessão de 2h após a refeição principal. Para fígado/vesícula: pad no hipocôndrio direito + pad nas costas na mesma altura.', programas:['Stomach Support (C) - JW','Gut Healing (C) - JW','Liver Detox (C) - JW'] },
+    laser:   null,
+    pemf:    { instrucoes:'Bobina PEMF sobre o <strong>abdômen</strong>. Sessão de 30 min após a refeição principal. Auxilia peristaltismo intestinal, reduz inflamação da mucosa e melhora circulação hepática.' },
+    plasma:  null,
+  },
+  ocular: {
+    remote:  { buster:false, instrucoes:'<strong>Remote Mode 24h.</strong> Presets: Vision Support (C) - JW, Cataract (CAFL), Glaucoma (ETDFL), Blepharitis (CAFL). Use cada preset por no mínimo 7 dias antes de trocar.', programas:['Vision Support (C) - JW','Cataract (CAFL)','Glaucoma (ETDFL)','Blepharitis (CAFL)'] },
+    contact: null,
+    laser:   { instrucoes:'⚠️ <strong>NUNCA aponte o laser diretamente para o globo ocular.</strong> Aplique sobre os ossos ao redor dos olhos: <strong>arco superciliar</strong> (acima do olho) e <strong>osso malar</strong> (abaixo). 2–3 min por ponto. Use potência mínima disponível.' },
+    pemf:    null,
+    plasma:  null,
+  },
+  pele: {
+    remote:  { buster:false, instrucoes:'<strong>Remote Mode 24h.</strong> Presets por condição: psoríase → Psoriasis (C) - JW; eczema → Eczema (ETDFL); acne → Acne (C) - JW; geral → Skin Health (C) - JW. Combine com Liver Detox (C) - JW (eixo pele-fígado é fundamental).', programas:['Psoriasis (C) - JW','Eczema (ETDFL)','Acne (C) - JW','Skin Health (C) - JW','Anti-inflammatory (C) - JW','Liver Detox (C) - JW','Antifungal General (C) - JW'] },
+    contact: { buster:false, instrucoes:'Pads <strong>próximos (mas não diretamente sobre)</strong> lesões extensas. Para efeito sistêmico: pulso direito + tornozelo esquerdo. Sessão de 2h, 1–2x ao dia.', programas:['Skin Health (C) - JW','Anti-inflammatory (C) - JW'] },
+    laser:   { instrucoes:'Laser frio <strong>diretamente sobre as lesões de pele</strong>. 2–5 min por lesão em movimentos circulares lentos. Excelente para psoríase, eczema, acne, úlceras, manchas e fungos. Aplique individualmente em cada lesão.' },
+    pemf:    null,
+    plasma:  null,
+  },
+  energia: {
+    remote:  { buster:false, instrucoes:'<strong>Remote Mode 24h.</strong> Presets: Chronic Fatigue (C) - JW, Energizing (C) - JW, Adrenal Support (C) - JW, Mitochondria Support (C) - JW. Use cada preset por no mínimo 3–5 dias antes de trocar.', programas:['Chronic Fatigue (C) - JW','Energizing (C) - JW','Adrenal Support (C) - JW','Mitochondria Support (C) - JW','CFS (ETDFL)'] },
+    contact: { buster:false, instrucoes:'Pads no pulso direito + tornozelo esquerdo. Sessão de 1–2h <strong>pela manhã</strong> (evite à noite — pode dificultar o sono). Intensidade baixa a moderada.', programas:['Energizing (C) - JW','Adrenal Support (C) - JW'] },
+    laser:   null,
+    pemf:    { instrucoes:'Bobina PEMF nas <strong>costas (região dorsal/adrenal, entre as escápulas)</strong>. Sessão de 30 min de manhã. Estimula a produção de energia mitocondrial e ativa os adrenais.' },
+    plasma:  null,
+  },
+  reprodutivo: {
+    remote:  { buster:false, instrucoes:'<strong>Remote Mode 24h.</strong> Presets por condição: cólica → Dysmenorrhea (ETDFL); TPM → PMS (C) - JW; hormonal → Hormonal Balance (C) - JW; endometriose → Endometriosis (C) - JW; menopausa → Menopause Support (C) - JW.', programas:['Hormonal Balance (C) - JW','PMS (C) - JW','Dysmenorrhea (ETDFL)','Endometriosis (C) - JW','Menopause Support (C) - JW','Ovarian Cyst (CAFL)'] },
+    contact: { buster:false, instrucoes:'Pads no <strong>abdômen inferior + região sacral</strong> (parte baixa das costas). Sessão de 2h. Para cólicas: use durante todo o período menstrual. <strong>⚠️ NÃO usar durante gravidez.</strong>', programas:['Hormonal Balance (C) - JW','Dysmenorrhea (ETDFL)'] },
+    laser:   null,
+    pemf:    { instrucoes:'Bobina PEMF sobre o <strong>abdômen inferior</strong>. Sessão de 30 min. Muito eficaz para cólicas menstruais, endometriose e miomas. Use antes e durante o período.' },
+    plasma:  null,
+  },
+  detox: {
+    remote:  { buster:false, instrucoes:'<strong>Remote Mode 24h.</strong> Comece SEMPRE com <strong>Terrain Protocol (C) - JW por 7–14 dias</strong> — imprescindível antes de qualquer protocolo de detox. Depois: Heavy Metal Detox (C) - JW, Detox Maintenance (C) - JW, Parasite General (C) - JW. Alterne a cada 5–7 dias.', programas:['Terrain Protocol (C) - JW','Heavy Metal Detox (C) - JW','Detox Maintenance (C) - JW','Parasite General (C) - JW','Antiparasitic (C) - JW','Mercury Detox (CAFL)','Lead Detox (CAFL)'] },
+    contact: { buster:true, instrucoes:'<strong>BUSTER É INDICADO</strong> para detox e parasitas — aumenta o campo elétrico e potencializa a resposta antiparasitária e de quelação. Pads no <strong>pulso direito + tornozelo esquerdo</strong>. Sessão de 2–3h, 1x ao dia. Reação Herxheimer esperada nos primeiros 5–7 dias — beba 3L de água/dia e reduza a sessão pela metade se necessário.', programas:['Antiparasitic (C) - JW','Biofilm Buster (C) - JW','Heavy Metal Detox (C) - JW','Terrain Protocol (C) - JW'] },
+    laser:   null,
+    pemf:    null,
+    plasma:  { instrucoes:'Plasma é altamente eficaz para parasitas, fungos e detox de metais pesados. Tubo a <strong>30 cm do abdômen</strong>. Sessão de 45 min. Comece com 20 min nos primeiros 3 dias e aumente progressivamente. Beba 3L de água/dia durante todo o protocolo.' },
+  },
+};
+
+function renderAccessorioCard() {
+  const checksEl = document.getElementById('accChecks');
+  if (!checksEl) return;
+  checksEl.innerHTML = ACESSORIOS_LISTA.map(a => `
+    <label class="acc-check" id="acc-label-${a.id}">
+      <input type="checkbox" id="acc-${a.id}" onchange="toggleAccCheck('${a.id}');updateAccessorios()">
+      ${a.icon} ${a.nome}
+      <span class="acc-badge-sm">${a.badge}</span>
+    </label>`).join('');
+}
+
+function toggleAccCheck(id) {
+  const label = document.getElementById('acc-label-' + id);
+  const cb = document.getElementById('acc-' + id);
+  if (label) label.classList.toggle('checked', cb.checked);
+}
+
+function updateAccessorios() {
+  const selected = ACESSORIOS_LISTA.filter(a => document.getElementById('acc-' + a.id)?.checked);
+  const content = document.getElementById('accessorioContent');
+  if (!content) return;
+  if (!currentPreview || selected.length === 0) {
+    content.innerHTML = '<div class="acc-empty">Selecione ao menos um acessório acima para ver o protocolo personalizado para este scan.</div>';
+    return;
+  }
+  const topSystems = currentPreview.systems.filter(s => s.score > 0).slice(0, 6);
+  let html = '<div class="acc-protocol">';
+  let hasContent = false;
+  topSystems.forEach(sys => {
+    const db = SYSTEM_ACCESSORY_DB[sys.id];
+    if (!db) return;
+    const relevantAcc = selected.filter(a => db[a.id]);
+    if (relevantAcc.length === 0) return;
+    hasContent = true;
+    const lvClass = sys.level === 'ALTO' ? 'alto' : sys.level === 'MODERADO' ? 'moderado' : '';
+    html += `<div class="acc-sys-block">
+      <div class="acc-sys-header">
+        <span>${sys.name}</span>
+        <span class="acc-sys-level ${lvClass}">${sys.level} · ${sys.score.toLocaleString('pt-BR')} pts</span>
+      </div>`;
+    relevantAcc.forEach(acc => {
+      const proto = db[acc.id];
+      if (!proto) return;
+      let busterBadge = '';
+      if (acc.id === 'contact') {
+        busterBadge = proto.buster
+          ? '<span class="acc-buster-yes">⚡ COM BUSTER — recomendado</span>'
+          : '<span class="acc-buster-no">✓ Sem Buster necessário</span>';
+      }
+      const progsHtml = proto.programas && proto.programas.length
+        ? `<div class="acc-programas">${proto.programas.map(p => `<span class="fa-tag spk">${p}</span>`).join('')}</div>`
+        : '';
+      const warningContact = acc.id === 'contact' && sys.id === 'cardiovascular'
+        ? '<div class="acc-warning">⚠️ NÃO use em pacientes com marcapasso. Nunca posicione pads próximos ao coração.</div>' : '';
+      html += `<div class="acc-device-block">
+        <div class="acc-device-title">${acc.icon} ${acc.nome} ${busterBadge}</div>
+        <div class="acc-instrucoes">${proto.instrucoes}</div>
+        ${progsHtml}${warningContact}
+      </div>`;
+    });
+    html += '</div>';
+  });
+  if (!hasContent) {
+    html += '<div class="acc-empty">Nenhuma orientação específica encontrada para a combinação de sistemas e acessórios selecionados.</div>';
+  }
+  html += '</div>';
+  content.innerHTML = html;
+}
+
+// ─────────────────────────────────────────────
 //  RESTART
 // ─────────────────────────────────────────────
 function restart() {
@@ -1639,7 +1845,7 @@ function restart() {
   document.getElementById('formSection').style.display = 'block';
   fi.value = '';
   document.getElementById('uploadOk').textContent = '';
-  ['sintCard','custCard','parasitasCard','diagCard','topAnalysisCard'].forEach(id => document.getElementById(id).style.display = 'none');
+  ['sintCard','custCard','parasitasCard','diagCard','topAnalysisCard','accessorioCard'].forEach(id => document.getElementById(id).style.display = 'none');
   document.getElementById('copyCard').style.display = 'none';
   currentPreview = null;
   window.scrollTo({ top: 0, behavior: 'smooth' });
