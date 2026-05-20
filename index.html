@@ -1100,7 +1100,7 @@ async function analyze() {
     };
     const age = patient.dob ? Math.floor((new Date() - new Date(patient.dob)) / (365.25 * 24 * 3600 * 1000)) : null;
     const imc = (patient.peso && patient.altura) ? (parseFloat(patient.peso) / Math.pow(parseFloat(patient.altura) / 100, 2)).toFixed(1) : null;
-    const recomendacoes = buildRec(data.systems);
+    const recomendacoes = buildRec(data.systems, data.top10);
     currentPreview = { ...data, patient: { ...patient, age, imc }, recomendacoes };
     clearInterval(msgInt);
     document.getElementById('loading').className = 'loading';
@@ -1236,46 +1236,55 @@ const REC_DB = {
   },
 };
 
-function buildRec(systems) {
-  const sc = id => (systems.find(s => s.id === id) || {}).score || 0;
-  const has = (id, min) => sc(id) >= min;
+// Recomendações derivadas estritamente dos programas presentes no arquivo enviado.
+// Suplementos e chás: mapeados via PROGRAM_ANALYSIS dos top programas do scan.
+// Dieta: apenas para sistemas com nível ALTO (evidência forte no arquivo).
+function buildRec(systems, topPrograms) {
+  const S = new Set(), C = new Set(), D = new Set();
+  const triggerLabels = [], matchedConditions = [];
 
-  const triggers = {
-    D3:   has('infeccioso',150) || has('musculo',150) || has('neurologico',150) || has('cardiovascular',150),
-    Mg:   has('neurologico',150) || has('musculo',150) || has('cardiovascular',150),
-    Om3:  has('cardiovascular',150) || has('neurologico',150) || has('musculo',150) || has('reprodutivo',100),
-    Pb:   has('infeccioso',150) || has('digestivo',150) || has('detox',150),
-    Zn:   has('infeccioso',150) || has('respiratorio',150) || has('pele',100),
-    VitC: has('infeccioso',150) || has('respiratorio',150) || has('pele',100) || has('detox',150) || has('energia',100),
-  };
-
-  const baseS = [], triggerLabels = [];
-  if (triggers.D3)   { baseS.push('🟡 Vitamina D3 + K2 — 2.000–5.000 UI + 100mcg/dia'); triggerLabels.push('D3+K2 ▸ imunidade/ósseo/neurológico'); }
-  if (triggers.Mg)   { baseS.push('🟡 Magnésio Glicinato — 300–400mg à noite'); triggerLabels.push('Magnésio ▸ SNC/muscular/cardiovascular'); }
-  if (triggers.Om3)  { baseS.push('🟡 Ômega-3 EPA+DHA — 1.000–2.000mg/dia'); triggerLabels.push('Ômega-3 ▸ cardiovascular/neurológico/muscular'); }
-  if (triggers.Pb)   { baseS.push('🟡 Probiótico amplo espectro — 10–30 bilhões UFC/dia'); triggerLabels.push('Probiótico ▸ microbiota/detox/imunidade'); }
-  if (triggers.Zn)   { baseS.push('🟡 Zinco quelado — 15–30mg/dia'); triggerLabels.push('Zinco ▸ infeccioso/respiratório/pele'); }
-  if (triggers.VitC) { baseS.push('🟡 Vitamina C — 1.000–2.000mg/dia'); triggerLabels.push('Vitamina C ▸ imunidade/antioxidante/detox'); }
-
-  const baseC = ['💧 Água: mínimo 2,5–3 litros por dia'];
-  const baseD = [];
-  const active = systems.filter(s => s.level !== 'LEVE' && s.score > 0).slice(0, 5);
-  if (active.length > 0) {
-    baseD.push('✅ Priorizar alimentos naturais e não processados');
-    baseD.push('✅ Incluir proteína de qualidade em todas as refeições');
-  }
-  if (has('infeccioso',150) || has('detox',150) || has('digestivo',150)) {
-    baseD.push('❌ Eliminar açúcar refinado durante o protocolo');
-    baseD.push('❌ Evitar álcool durante o protocolo (21 dias)');
-  }
-
-  const S = new Set(baseS), C = new Set(baseC), D = new Set(baseD);
-  active.forEach(s => {
-    const r = REC_DB[s.id]; if (!r) return;
-    r.s.forEach(x => S.add(x)); r.c.forEach(x => C.add(x)); r.d.forEach(x => D.add(x));
+  // ── 1. Suplementos e chás: top programas do arquivo → PROGRAM_ANALYSIS ──
+  (topPrograms || []).forEach(prog => {
+    const pName = prog.name.toLowerCase();
+    const match = PROGRAM_ANALYSIS.find(def =>
+      def.keywords.some(kw => pName.includes(kw.toLowerCase()))
+    );
+    if (match && !matchedConditions.includes(match.name)) {
+      matchedConditions.push(match.name);
+      triggerLabels.push(`${match.name} (${prog.count}×)`);
+      match.suplementos.forEach(x => S.add(x));
+      match.chas.forEach(x => C.add(x));
+    }
   });
 
-  return { suplementos: [...S], chas: [...C], dieta: [...D], activeSystems: active.map(s => s.name), triggerLabels, totalBase: baseS.length };
+  // Água — sempre incluída
+  C.add('💧 Água: mínimo 2,5–3 litros por dia');
+
+  // ── 2. Dieta: apenas sistemas com nível ALTO no arquivo ──
+  const sc = id => (systems.find(s => s.id === id) || {}).score || 0;
+  const altoSystems = systems.filter(s => s.level === 'ALTO' && s.score > 0);
+  if (altoSystems.length > 0) {
+    D.add('✅ Priorizar alimentos naturais e não processados');
+    D.add('✅ Incluir proteína de qualidade em todas as refeições');
+    altoSystems.forEach(s => {
+      const r = REC_DB[s.id];
+      if (r) r.d.forEach(x => D.add(x));
+    });
+  }
+  // Restrições alimentares só quando infeccioso/detox/digestivo aparecem com força real
+  if (sc('infeccioso') >= 300 || sc('detox') >= 300 || sc('digestivo') >= 250) {
+    D.add('❌ Eliminar açúcar refinado durante o protocolo');
+    D.add('❌ Evitar álcool durante o protocolo (21 dias)');
+  }
+
+  return {
+    suplementos: [...S],
+    chas: [...C],
+    dieta: [...D],
+    activeSystems: matchedConditions,
+    triggerLabels,
+    totalBase: matchedConditions.length,
+  };
 }
 
 // ─────────────────────────────────────────────
@@ -1314,9 +1323,9 @@ function renderResults(prev) {
   // Trigger info
   const ti = document.getElementById('triggerInfo');
   if (recomendacoes.totalBase === 0) {
-    ti.innerHTML = '⚠️ Nenhum suplemento base foi indicado — o scan não apresentou gatilhos suficientes para a base vitamínica.';
+    ti.innerHTML = '⚠️ Nenhum programa dos top 10 do arquivo gerou correspondência na base de análise. Verifique o arquivo enviado.';
   } else {
-    ti.innerHTML = '<strong>Suplementos base justificados pelo scan:</strong><br>' + recomendacoes.triggerLabels.join(' &nbsp;·&nbsp; ');
+    ti.innerHTML = '<strong>Recomendações geradas exclusivamente pelos programas do seu arquivo:</strong><br>' + recomendacoes.triggerLabels.join(' &nbsp;·&nbsp; ');
   }
   document.getElementById('copyCard').style.display = 'block';
 
