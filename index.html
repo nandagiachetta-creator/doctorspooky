@@ -605,18 +605,21 @@ function detectParasites(pc) {
 // ─────────────────────────────────────────────
 //  POSSIBILIDADES DE DIAGNÓSTICO
 // ─────────────────────────────────────────────
+// specific: palavras-chave que devem estar presentes no arquivo enviado
+// specificMin: número mínimo de ocorrências totais desses programas no scan
+// Sem esses campos = diagnóstico baseado só nos scores dos sistemas (OK para condições gerais)
 const DIAG_MAP = [
   {name:'Síndrome de Fadiga Crônica (SFC/EM)',desc:'Exaustão sistêmica persistente com comprometimento imunológico e neurológico',reqs:[{id:'energia',min:150},{id:'neurologico',min:100}]},
   {name:'Fibromialgia',desc:'Dor musculoesquelética difusa com sensibilização central e fadiga',reqs:[{id:'musculo',min:200},{id:'neurologico',min:150}]},
   {name:'Disbiose Intestinal / SIBO',desc:'Desequilíbrio da microbiota com supercrescimento bacteriano intestinal',reqs:[{id:'digestivo',min:200}]},
-  {name:'Candidíase Sistêmica',desc:'Proliferação fúngica sistêmica com comprometimento digestivo e imunológico',reqs:[{id:'infeccioso',min:150},{id:'digestivo',min:100}]},
-  {name:'Infestação Parasitária Intestinal',desc:'Presença de helmintas ou protozoários com sobrecarga do sistema detox',reqs:[{id:'detox',min:200}]},
+  {name:'Candidíase Sistêmica',desc:'Proliferação fúngica sistêmica com comprometimento digestivo e imunológico',reqs:[{id:'infeccioso',min:150},{id:'digestivo',min:100}],specific:['Candida','Yeast','Fungal','Thrush','Monilia','Candidiasis'],specificMin:3},
+  {name:'Infestação Parasitária Intestinal',desc:'Presença de helmintas ou protozoários com sobrecarga do sistema detox',reqs:[{id:'detox',min:200}],specific:['Parasite','Tapeworm','Roundworm','Giardia','Flukes','Nematoda','Trichinosis','Hookworm','Pinworm','Antiparasitic'],specificMin:5},
   {name:'Ansiedade / Estresse Crônico',desc:'Desregulação do eixo HPA com impacto no sistema nervoso autônomo',reqs:[{id:'neurologico',min:200}]},
-  {name:'Doença de Lyme / Borreliose Crônica',desc:'Infecção multissistêmica por espiroqueta com possíveis coinfecções',reqs:[{id:'infeccioso',min:300},{id:'musculo',min:100}]},
+  {name:'Doença de Lyme / Borreliose Crônica',desc:'Infecção multissistêmica por espiroqueta com possíveis coinfecções',reqs:[{id:'infeccioso',min:200},{id:'musculo',min:80}],specific:['Lyme','Borreli','Borellia','Borrellia'],specificMin:5},
   {name:'Síndrome Metabólica',desc:'Desregulação metabólica com risco cardiovascular elevado',reqs:[{id:'cardiovascular',min:150},{id:'digestivo',min:100}]},
   {name:'Disfunção Hormonal / Endócrina',desc:'Desequilíbrio hormonal sistêmico com comprometimento do ciclo feminino',reqs:[{id:'reprodutivo',min:150}]},
-  {name:'Intoxicação por Metais Pesados',desc:'Acúmulo de toxinas metálicas com comprometimento neurológico e hepático',reqs:[{id:'detox',min:300}]},
-  {name:'Infecção Viral Reativada (EBV/CMV/Herpes)',desc:'Reativação viral crônica com fadiga persistente e imunodepressão',reqs:[{id:'infeccioso',min:200},{id:'energia',min:100}]},
+  {name:'Intoxicação por Metais Pesados',desc:'Acúmulo de toxinas metálicas com comprometimento neurológico e hepático',reqs:[{id:'detox',min:300}],specific:['Heavy Metal','Mercury','Lead','Aluminum','Arsenic','Chelation'],specificMin:3},
+  {name:'Infecção Viral Reativada (EBV/CMV/Herpes)',desc:'Reativação viral crônica com fadiga persistente e imunodepressão',reqs:[{id:'infeccioso',min:200},{id:'energia',min:100}],specific:['Epstein','EBV','Cytomegal','CMV','Herpes','Mononucleosis','Zoster'],specificMin:3},
   {name:'Disfunção Cardiovascular / Hipertensão',desc:'Comprometimento do sistema cardiovascular com risco vascular',reqs:[{id:'cardiovascular',min:200}]},
   {name:'Síndrome do Intestino Permeável (Leaky Gut)',desc:'Aumento da permeabilidade intestinal com inflamação sistêmica',reqs:[{id:'digestivo',min:150},{id:'infeccioso',min:100}]},
   {name:'Infecções Respiratórias Recorrentes',desc:'Predisposição a infecções no trato respiratório superior e inferior',reqs:[{id:'respiratorio',min:150}]},
@@ -834,12 +837,32 @@ function toggleFA(id) {
   tog.classList.toggle('open', isOpen);
 }
 
-function buildDiagnoses(systems) {
+function buildDiagnoses(systems, pc) {
   const sc = id => (systems.find(s => s.id === id) || {}).score || 0;
   const results = [];
   DIAG_MAP.forEach(diag => {
+    // Confiança base pelos scores dos sistemas
     const scores = diag.reqs.map(r => Math.min(sc(r.id) / r.min, 1));
-    const conf = Math.round(scores.reduce((a, b) => a + b, 0) / scores.length * 100);
+    let conf = scores.reduce((a, b) => a + b, 0) / scores.length * 100;
+
+    // Validação por palavras-chave específicas presentes no arquivo enviado
+    if (diag.specific && pc) {
+      const specificHits = Object.entries(pc)
+        .filter(([prog]) => diag.specific.some(k => prog.toLowerCase().includes(k.toLowerCase())))
+        .reduce((sum, [, count]) => sum + count, 0);
+
+      if (specificHits === 0) return; // Nenhum hit específico no arquivo — não exibir
+
+      // Confiança graduada pela quantidade de hits específicos reais
+      const cap = specificHits >= 15 ? 100
+                : specificHits >= 8  ? 80
+                : specificHits >= 5  ? 65
+                : specificHits >= 3  ? 55
+                :                      40; // < 3 hits: abaixo do limiar, não exibe
+      conf = Math.min(conf, cap);
+    }
+
+    conf = Math.round(conf);
     if (conf >= 50) {
       const level = conf >= 80 ? 'alto' : conf >= 60 ? 'moderado' : 'leve';
       results.push({ ...diag, conf, level });
@@ -891,6 +914,7 @@ function saveCurrentPatient() {
         uniquePrograms: prev.uniquePrograms,
         recomendacoes: prev.recomendacoes,
         parasites: prev.parasites ? prev.parasites.found : [],
+        programCount: prev.programCount || {},
       }
     };
     if (idx >= 0) { patients[idx] = profile; } else { patients.unshift(profile); }
@@ -957,6 +981,7 @@ function loadPatientResults(id) {
     parasites: { found: parasiteFound, grouped },
     totalMentions: r.totalMentions || 0,
     uniquePrograms: r.uniquePrograms || 0,
+    programCount: r.programCount || {},
   };
   closePatientsModal();
   document.getElementById('formSection').style.display = 'none';
@@ -1120,7 +1145,7 @@ function extractData(content) {
   const systems = analyzeSystems(pc);
   const totalMentions = Object.values(pc).reduce((a, b) => a + b, 0);
   const parasites = detectParasites(pc);
-  return { meta, hits, top10: top.slice(0, 10), topAll: top, custPrograms: [...custSet], systems, totalMentions, uniquePrograms: Object.keys(pc).length, parasites };
+  return { meta, hits, top10: top.slice(0, 10), topAll: top, custPrograms: [...custSet], systems, totalMentions, uniquePrograms: Object.keys(pc).length, parasites, programCount: pc };
 }
 
 // ─────────────────────────────────────────────
@@ -1258,7 +1283,7 @@ function buildRec(systems) {
 // ─────────────────────────────────────────────
 function renderResults(prev) {
   const { patient, systems, top10, custPrograms, hits, recomendacoes, parasites } = prev;
-  const diagnoses = buildDiagnoses(systems);
+  const diagnoses = buildDiagnoses(systems, prev.programCount || {});
 
   // Patient header
   const age = patient.age ? patient.age + ' anos' : '';
